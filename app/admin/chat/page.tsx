@@ -3,15 +3,29 @@ import { useState, useEffect, useRef } from 'react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
+// PERBAIKAN: Deteksi token admin yang jauh lebih mendalam dan fleksibel
 function getValidToken(): string | null {
   if (typeof window === 'undefined') return null;
+  
+  // 1. Cek bypass manual terlebih dahulu
   const manualToken = localStorage.getItem('manual_admin_token');
   if (manualToken) return manualToken;
 
-  const directKeys = ['token', 'accessToken', 'jwt', 'admin_token', 'user_token'];
+  // 2. Cek semua variasi nama key yang berpotensi menyimpan token admin/user
+  const directKeys = ['token', 'accessToken', 'jwt', 'admin_token', 'user_token', 'access_token'];
   for (const key of directKeys) {
     const val = localStorage.getItem(key);
     if (val && val !== 'undefined' && val !== 'null') return val;
+  }
+
+  // 3. Cek jika token admin dibungkus di dalam objek JSON 'user' atau 'admin'
+  const userData = localStorage.getItem('user') || localStorage.getItem('admin');
+  if (userData) {
+    try {
+      const parsed = JSON.parse(userData);
+      const tokenInside = parsed.token || parsed.accessToken || parsed.access_token || parsed.user?.token;
+      if (tokenInside) return tokenInside;
+    } catch (e) {}
   }
   return null;
 }
@@ -47,7 +61,7 @@ export default function AdminChatsPage() {
     fetchChatList(true);
   }, []);
 
-  // Polling data dari backend untuk admin setiap 4.5 detik
+  // Sinkronisasi background data interval
   useEffect(() => {
     const interval = setInterval(() => {
       fetchChatList(false); 
@@ -124,7 +138,7 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic Update Admin: Diset isFromUser: false karena dikirim oleh Admin (UI Kanan)
+    // Optimistic update admin disesuaikan menjadi isFromUser: false (Karena ini kiriman admin)
     setRoomMessages(prev => [...prev, {
       id: Date.now(),
       isFromUser: false, 
@@ -211,11 +225,8 @@ export default function AdminChatsPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                
-                // JIKA isFromUser FALSE -> BERARTI INI CHAT MILIK ADMIN (KANAN)
                 const isAdmin = msg.isFromUser === false;
                 const textContent = msg.content || msg.text || msg.message || '';
-                
                 if (!textContent.trim()) return null;
 
                 return (

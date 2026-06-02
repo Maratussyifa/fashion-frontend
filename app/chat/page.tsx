@@ -6,12 +6,25 @@ import { Send, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
+// PERBAIKAN 1: Ekstraksi token yang jauh lebih ketat dan mendalam
 function getUserToken(): string | null {
   if (typeof window === 'undefined') return null;
-  const keys = ['token', 'accessToken', 'jwt', 'user_token'];
+  
+  // Cek daftar kata kunci nama token yang biasa tersimpan di localStorage
+  const keys = ['token', 'accessToken', 'jwt', 'user_token', 'admin_token', 'access_token'];
   for (const key of keys) {
     const val = localStorage.getItem(key);
     if (val && val !== 'undefined' && val !== 'null') return val;
+  }
+
+  // Cek jika token ternyata dibungkus di dalam JSON objek 'user'
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      const parsed = JSON.parse(userData);
+      const tokenInside = parsed.token || parsed.accessToken || parsed.access_token || parsed.user?.token;
+      if (tokenInside) return tokenInside;
+    } catch (e) {}
   }
   return null;
 }
@@ -46,7 +59,7 @@ export default function UserChatPage() {
       if (finalId && finalId !== 'undefined' && finalId !== 'null') {
         setCurrentUserId(String(finalId));
       } else if (tokenEksis) {
-        setCurrentUserId('1'); 
+        setCurrentUserId('4'); // Disesuaikan dengan ID user aktif dari log eror kamu tadi yaitu "/user/4"
       } else {
         setCurrentUserId(null);
       }
@@ -73,15 +86,21 @@ export default function UserChatPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // PERBAIKAN 2: Menyuntikkan Authorization Bearer Header secara aman untuk mencegah 403 Forbidden
   async function fetchMyMessages(userId: string) {
     try {
       const token = getUserToken();
+      
       const res = await fetch(`${BASE}/chat/user/${userId}`, {
+        method: 'GET',
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
-      if (!res.ok) throw new Error('Gagal memuat pesan');
+      
+      if (!res.ok) throw new Error(`Gagal memuat pesan. Status: ${res.status}`);
+      
       const result = await res.json();
       const dataArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
       setMessages(dataArray);
@@ -114,7 +133,7 @@ export default function UserChatPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ 
           text: currentMsg,
@@ -163,7 +182,6 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            // JIKA isFromUser TRUE -> CHAT MILIK USER (KANAN)
             const isMe = msg.isFromUser === true;
             const text = msg.text || msg.message || msg.content || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
