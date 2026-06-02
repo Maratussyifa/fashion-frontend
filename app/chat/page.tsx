@@ -78,9 +78,10 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update instan di kanan user (isFromUser = true)
+    // Optimistic Update instan di kanan user (isBawaanLokalUser = true)
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
+      isBawaanLokalUser: true,
       isFromUser: true,
       content: currentMsg,
       text: currentMsg,
@@ -141,8 +142,14 @@ export default function UserChatPage() {
         ) : (
           messages.map((msg: any, idx: number) => {
             
-            // Di sisi user, chat berada di KANAN (isMe = true) jika isFromUser bernilai true
-            const isMe = msg.isFromUser === true || msg.sender === 'user' || msg.role === 'user';
+            // 🚨 LOGIKA SAPU JAGAT SISI USER 🚨
+            // Di layar user: Chat USER sendiri wajib di KANAN (isMe = true)
+            // Chat Balasan CS/ADMIN wajib di KIRI (isMe = false)
+            const isFromUserTrue = msg.isFromUser === true || String(msg.isFromUser) === 'true';
+            
+            const isMe = 
+              msg.isBawaanLokalUser === true || 
+              (isFromUserTrue === true && msg.sender !== 'admin' && msg.role !== 'admin');
 
             const text = msg.content || msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
@@ -151,7 +158,7 @@ export default function UserChatPage() {
             return (
               <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
                 <div style={{
-                  background: isMe ? '#0a1628' : '#ffffff',
+                  background: isMe ? '#0a1628' : '#ffffff', // Ketikan User = Gelap (Kanan), Ketikan Admin = Putih (Kiri)
                   color: isMe ? '#ffffff' : '#1e293b',
                   padding: '10px 14px',
                   borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',

@@ -117,6 +117,9 @@ export default function AdminChatsPage() {
       if (!res.ok) throw new Error();
       const result = await res.json();
       const messagesArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
+      
+      console.log("=== SELECTION DATA ARRAY ===", messagesArray);
+      
       setRoomMessages(messagesArray);
     } catch (err) {
       console.error(err);
@@ -133,9 +136,10 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic Update instan di kanan demi kenyamanan UI
+    // Optimistic Update instan dipaksa di kanan
     setRoomMessages(prev => [...prev, {
       id: `local-${Date.now()}`,
+      isBawaanLokalAdmin: true,
       isFromUser: false, 
       content: currentReply, 
       text: currentReply, 
@@ -216,11 +220,21 @@ export default function AdminChatsPage() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
                 
-                // 🚨 FIX TOTAL KUNCI MATI DISINI BERDASARKAN CONSOLE LOG 🚨
-                // Jika isFromUser bernilai false, MAKA 100% PASTI CHAT ADMIN (KANAN)
-                const isAdmin = msg.isFromUser === false || msg.sender === 'admin' || msg.role === 'admin';
-
+                // 🚨 INTEGRASI LOGIKA SAPU JAGAT KOMPLIT BERDASARKAN STRING BOOLEAN DETECTOR 🚨
                 const textContent = msg.content || msg.text || msg.message || '';
+                
+                const isFromUserTrue = msg.isFromUser === true || String(msg.isFromUser) === 'true';
+                
+                const isAdmin = 
+                  msg.isBawaanLokalAdmin === true || 
+                  isFromUserTrue === false || 
+                  msg.sender === 'admin' || 
+                  msg.role === 'admin' ||
+                  (msg.user && (msg.user.role === 'admin' || msg.user.role === 'superadmin'));
+
+                // Log pembantu untuk memantau status bubble langsung dari browser
+                console.log(`Msg: "${textContent}" -> isFromUserRaw:`, msg.isFromUser, "-> TerbacaAdmin:", isAdmin);
+
                 if (!textContent.trim()) return null;
 
                 return (
