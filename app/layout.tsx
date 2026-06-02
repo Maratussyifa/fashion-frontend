@@ -1,7 +1,8 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import Navbar from '@/components/Navbar'; // Pastikan di dalam komponen ini teks "AIGNE" sudah diganti logo SHINE
-import Footer from '@/components/Footer'; // Pastikan copyright di dalam komponen ini sudah diubah ke SHINE
+import { Suspense } from 'react'; // 1. Tambahkan import Suspense dari React
+import Navbar from '@/components/Navbar'; 
+import Footer from '@/components/Footer'; 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,8 +23,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ margin: 0, padding: 0, backgroundColor: '#f8fafc' }}>
         
-        {/* Hanya tampilkan Navbar jika bukan halaman admin, login, atau register */}
-        {!hideNavbarFooter && <Navbar />}
+        {/* 2. Bungkus Navbar dengan Suspense agar Vercel lolos dari prerender-error */}
+        {!hideNavbarFooter && (
+          <Suspense fallback={<div style={{ padding: '15px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>Loading Navigation...</div>}>
+            <Navbar />
+          </Suspense>
+        )}
 
         {/* Berikan minHeight agar footer tetap berada di bawah jika konten sedikit */}
         <main style={{ minHeight: 'calc(100vh - 70px)' }}>
