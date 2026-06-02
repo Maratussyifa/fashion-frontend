@@ -11,7 +11,7 @@ function getUserToken(): string | null {
   const keys = ['token', 'accessToken', 'jwt', 'user_token'];
   for (const key of keys) {
     const val = localStorage.getItem(key);
-    if (val && val !== 'undefined') return val;
+    if (val && val !== 'undefined' && val !== 'null') return val;
   }
   return null;
 }
@@ -24,7 +24,7 @@ export default function UserChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // SINKRONISASI DATA LOGIN
+  // SINKRONISASI DATA LOGIN USER
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const tokenEksis = getUserToken();
@@ -53,7 +53,7 @@ export default function UserChatPage() {
     }
   }, [pathname]);
 
-  // Polling Chat (Setiap 4 detik)
+  // Polling data dari backend setiap 4 detik
   useEffect(() => {
     if (!currentUserId) {
       setLoading(false);
@@ -83,12 +83,10 @@ export default function UserChatPage() {
       });
       if (!res.ok) throw new Error('Gagal memuat pesan');
       const result = await res.json();
-      
-      // Ambil array chat baik dari format .data, .messages, atau langsung root array
       const dataArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
       setMessages(dataArray);
     } catch (err) {
-      console.error('Gagal mengambil chat:', err);
+      console.error('Gagal mengambil chat user:', err);
     } finally {
       setLoading(false);
     }
@@ -101,7 +99,7 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update UI (Langsung pasang isFromUser: true)
+    // Optimistic Update: Langsung muncul di UI kanan (isFromUser: true)
     const localMsg = {
       id: Date.now(),
       isFromUser: true, 
@@ -112,8 +110,6 @@ export default function UserChatPage() {
 
     try {
       const token = getUserToken();
-      
-      // Mengirim data sesuai struktur backend yang menerima parameter objek text
       await fetch(`${BASE}/chat/reply/${currentUserId}`, {
         method: 'POST',
         headers: {
@@ -126,7 +122,6 @@ export default function UserChatPage() {
         })
       });
       
-      // Sinkronisasi ulang dengan database
       fetchMyMessages(currentUserId);
     } catch (err) {
       console.error('Gagal mengirim ke server:', err);
@@ -136,7 +131,7 @@ export default function UserChatPage() {
   return (
     <div style={{ height: '100vh', paddingTop: '70px', display: 'flex', flexDirection: 'column', background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif', boxSizing: 'border-box' }}>
       
-      {/* SUB-HEADER INFO CHAT */}
+      {/* SUB-HEADER KHUSUS INFO CHAT */}
       <div style={{ background: '#ffffff', padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link href="/home" style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
@@ -168,12 +163,9 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            // FIX UTAMA: Menggunakan data boolean isFromUser dari database Railway Anda
-            // Jika isFromUser berharga true, dipastikan itu adalah bubble chat milik User (Kanan)
-            // Jika false atau undefined, maka itu adalah chat dari Admin/Customer Service (Kiri)
+            // JIKA isFromUser TRUE -> CHAT MILIK USER (KANAN)
             const isMe = msg.isFromUser === true;
-            
-            const text = msg.text || msg.message || '';
+            const text = msg.text || msg.message || msg.content || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             
             if (!text.trim()) return null;

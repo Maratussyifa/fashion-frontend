@@ -47,7 +47,7 @@ export default function AdminChatsPage() {
     fetchChatList(true);
   }, []);
 
-  // Sinkronisasi background data interval
+  // Polling data dari backend untuk admin setiap 4.5 detik
   useEffect(() => {
     const interval = setInterval(() => {
       fetchChatList(false); 
@@ -124,12 +124,10 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic update di UI (Mendukung properti multi-kondisi)
+    // Optimistic Update Admin: Diset isFromUser: false karena dikirim oleh Admin (UI Kanan)
     setRoomMessages(prev => [...prev, {
       id: Date.now(),
-      sender: 'admin',
-      isAdmin: true,
-      role: 'ADMIN',
+      isFromUser: false, 
       content: currentReply,
       text: currentReply,
       message: currentReply,
@@ -137,7 +135,6 @@ export default function AdminChatsPage() {
     }]);
 
     try {
-      // PERBAIKAN UTAMA: Mengirimkan field 'content' sesuai standar DTO Back-End NestJS
       const res = await authFetch(`/chat/reply/${selectedUserId}`, {
         method: 'POST',
         body: JSON.stringify({ 
@@ -179,12 +176,11 @@ export default function AdminChatsPage() {
             const name = item.user?.name || `User #${item.userId}`;
             const isActive = selectedUserId === item.userId;
             return (
-              <div key={item.id} onClick={() => handleSelectUser(item.userId, name)} style={{ padding: '16px 20px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', background: isActive ? '#f0f4f8' : 'transparent', borderLeft: isActive ? '4px solid #0a1628' : '4px solid transparent' }}>
+              <div key={item.id || item._id} onClick={() => handleSelectUser(item.userId, name)} style={{ padding: '16px 20px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', background: isActive ? '#f0f4f8' : 'transparent', borderLeft: isActive ? '4px solid #0a1628' : '4px solid transparent' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <span style={{ fontWeight: 700, color: '#0a1628', fontSize: '13px' }}>{name}</span>
                 </div>
                 <p style={{ margin: 0, fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {/* Akseptasi multi-properti isi teks pesan */}
                   {item.content || item.text || item.message || ''}
                 </p>
               </div>
@@ -215,18 +211,25 @@ export default function AdminChatsPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                // PERBAIKAN UTAMA: Fleksibilitas pengecekan identitas admin (string, boolean, atau role)
-                const isAdmin = 
-                  msg.sender === 'admin' || 
-                  msg.isAdmin === true || 
-                  msg.role === 'ADMIN' ||
-                  msg.userId === 'admin';
+                
+                // JIKA isFromUser FALSE -> BERARTI INI CHAT MILIK ADMIN (KANAN)
+                const isAdmin = msg.isFromUser === false;
+                const textContent = msg.content || msg.text || msg.message || '';
+                
+                if (!textContent.trim()) return null;
 
                 return (
-                  <div key={msg.id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isAdmin ? 'flex-end' : 'flex-start', alignSelf: isAdmin ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                    <div style={{ background: isAdmin ? '#0a1628' : '#ffffff', color: isAdmin ? '#ffffff' : '#1e293b', padding: '10px 14px', borderRadius: '12px', fontSize: '13px', border: isAdmin ? 'none' : '1px solid #e2e8f0' }}>
-                      {/* PERBAIKAN UTAMA: Mengutamakan field 'content' dari database */}
-                      {msg.content || msg.text || msg.message || ''}
+                  <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isAdmin ? 'flex-end' : 'flex-start', alignSelf: isAdmin ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                    <div style={{ 
+                      background: isAdmin ? '#0a1628' : '#ffffff', 
+                      color: isAdmin ? '#ffffff' : '#1e293b', 
+                      padding: '10px 14px', 
+                      borderRadius: isAdmin ? '12px 12px 2px 12px' : '12px 12px 12px 2px', 
+                      fontSize: '13px', 
+                      border: isAdmin ? 'none' : '1px solid #e2e8f0',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                    }}>
+                      {textContent}
                     </div>
                   </div>
                 );
