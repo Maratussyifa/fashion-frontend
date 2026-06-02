@@ -78,7 +78,7 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update: Samakan struktur murninya agar langsung menetap di kanan
+    // OPTIMISTIC UPDATE: Langsung pasang flag penentu kanan (isMe = true)
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
@@ -129,8 +129,8 @@ export default function UserChatPage() {
         </Link>
       </div>
 
-      {/* BOX PESAN */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
+      {/* BOX PESAN USER (Sudah Diperbaiki Total) */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>Menghubungkan...</div>
         ) : !hasToken ? (
@@ -143,39 +143,34 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            
-            // Evaluasi Boolean murni & string matching yang fleksibel dan aman
-            const isFromUserTrue = msg.isFromUser === true || String(msg.isFromUser) === 'true';
-            
-            // Penentu posisi kanan (Milik User Sendiri)
-            const isMe = 
-              msg.isBawaanLokalUser === true || 
-              msg.sender === 'user' || 
-              msg.role === 'user' ||
-              (isFromUserTrue && msg.sender !== 'admin' && msg.role !== 'admin');
-
             const text = msg.content || msg.text || msg.message || '';
-            const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             if (!text.trim()) return null;
 
+            // Logika Deteksi: Di layar user, chat miliknya sendiri WAJIB di KANAN (isMe = true)
+            const isFromUserRaw = msg.isFromUser === true || String(msg.isFromUser) === 'true';
+            const isMe = msg.isBawaanLokalUser === true || isFromUserRaw;
+
+            const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+
             return (
-              // Menggunakan row wrapper dengan penataan penuh agar struktur vertikal lurus sempurna
+              /* KUNCI PERBAIKAN: Dibungkus Baris 100% Full Width supaya tidak naik-turun */
               <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
                   <div style={{
-                    background: isMe ? '#0a1628' : '#ffffff', 
+                    background: isMe ? '#0a1628' : '#ffffff', // User = Gelap (Kanan), CS/Admin = Putih (Kiri)
                     color: isMe ? '#ffffff' : '#1e293b',
-                    padding: '10px 14px',
+                    padding: '10px 16px',
                     borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
                     fontSize: '13.5px',
+                    lineHeight: '1.5',
                     border: isMe ? 'none' : '1px solid #e2e8f0',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                     whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word'
+                    wordBreak: 'break-word' // Biar teks panjang otomatis patah ke bawah, gak melar kesamping
                   }}>
                     {text}
                   </div>
-                  <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', paddingLeft: '4px', paddingRight: '4px' }}>{time}</span>
+                  <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', padding: '0 4px' }}>{time}</span>
                 </div>
               </div>
             );
@@ -192,7 +187,7 @@ export default function UserChatPage() {
           onChange={(e) => setInputText(e.target.value)}
           disabled={!hasToken}
           placeholder={hasToken ? "Ketik pesan Anda di sini..." : "Silakan login terlebih dahulu..."}
-          style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', outline: 'none' }}
+          style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13.5px' }}
         />
         <button type="submit" disabled={!hasToken} style={{ width: '40px', height: '40px', borderRadius: '50%', background: hasToken ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <Send size={15} />
