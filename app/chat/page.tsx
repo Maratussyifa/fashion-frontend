@@ -34,7 +34,6 @@ export default function UserChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // SINKRONISASI DATA LOGIN USER
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const tokenEksis = getUserToken();
@@ -63,7 +62,6 @@ export default function UserChatPage() {
     }
   }, [pathname]);
 
-  // Polling data dari backend setiap 4 detik
   useEffect(() => {
     if (!currentUserId) {
       setLoading(false);
@@ -95,13 +93,13 @@ export default function UserChatPage() {
         }
       });
       
-      if (!res.ok) throw new Error(`Gagal memuat pesan. Status: ${res.status}`);
+      if (!res.ok) throw new Error(`Gagal memuat pesan.`);
       
       const result = await res.json();
       const dataArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
       setMessages(dataArray);
     } catch (err) {
-      console.error('Gagal mengambil chat user:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -114,11 +112,9 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update khusus user sendiri (Kanan - Gelap)
     const localMsg = {
       id: Date.now(),
-      isFromUser: true, 
-      dikirimOlehUserSitus: true, // Flag pengunci lokal
+      dikirimOlehUserSitus: true,
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -143,14 +139,14 @@ export default function UserChatPage() {
       
       fetchMyMessages(currentUserId);
     } catch (err) {
-      console.error('Gagal mengirim ke server:', err);
+      console.error(err);
     }
   }
 
   return (
     <div style={{ height: '100vh', paddingTop: '70px', display: 'flex', flexDirection: 'column', background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif', boxSizing: 'border-box' }}>
       
-      {/* SUB-HEADER KHUSUS INFO CHAT */}
+      {/* HEADER */}
       <div style={{ background: '#ffffff', padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link href="/home" style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
@@ -168,26 +164,21 @@ export default function UserChatPage() {
         </Link>
       </div>
 
-      {/* AREA RIWAYAT CHAT */}
+      {/* RIWAYAT CHAT */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
         {!currentUserId ? (
-          <div style={{ textAlign: 'center', color: '#ef4444', margin: 'auto', maxWidth: '320px', fontSize: '13px', fontWeight: 500, background: '#fee2e2', padding: '16px', borderRadius: '12px', border: '1px solid #fca5a5', lineHeight: 1.5 }}>
-            🔒 Akun belum terdeteksi penuh oleh sistem chat. Silakan pastikan Anda telah login atau coba masuk kembali untuk memuat obrolan.
+          <div style={{ textAlign: 'center', color: '#ef4444', margin: 'auto', maxWidth: '320px', fontSize: '13px', fontWeight: 500, background: '#fee2e2', padding: '16px', borderRadius: '12px', border: '1px solid #fca5a5' }}>
+            🔒 Akun belum terdeteksi penuh. Silakan login kembali untuk memuat obrolan.
           </div>
         ) : loading ? (
           <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', marginTop: '20px' }}>Menghubungkan ke server chat...</div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', margin: 'auto', maxWidth: '280px', fontSize: '13px', lineHeight: 1.6 }}>
+          <div style={{ textAlign: 'center', color: '#94a3b8', margin: 'auto', maxWidth: '280px', fontSize: '13px' }}>
             👋 Halo! Ada yang bisa kami bantu mengenai pesanan atau produk SHINE? Tulis pertanyaanmu di sini.
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            
-            // KALIBRASI DETEKSI SISI USER:
-            // Pesan dianggap milik USER SENDIRI (Kanan - Gelap) jika:
-            // 1. Berasal dari status optimistic ketikan lokal (dikirimOlehUserSitus === true)
-            // 2. Memiliki field relasi objek pembeli 'user' di dalamnya
-            // 3. Properti isFromUser secara tegas bernilai true
+            // Deteksi kebalikan: Dianggap user jika ada tanda relasi objek user atau bendera pengirim lokal aktif
             const isMe = 
               msg.dikirimOlehUserSitus === true ||
               !!msg.user || 
@@ -195,7 +186,6 @@ export default function UserChatPage() {
               msg.role === 'user' || 
               msg.sender === 'user';
 
-            // Ambil data teks dari seluruh kemungkinan field (content / text / message)
             const text = msg.content || msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             
@@ -224,7 +214,7 @@ export default function UserChatPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* FOOTER INPUT CHAT */}
+      {/* INPUT */}
       <form onSubmit={handleSendMessage} style={{ background: '#ffffff', padding: '14px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
         <input
           type="text"
@@ -234,7 +224,7 @@ export default function UserChatPage() {
           placeholder={currentUserId ? "Ketik pesan Anda di sini..." : "Silakan login terlebih dahulu..."}
           style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', background: currentUserId ? '#f8fafc' : '#e2e8f0', fontSize: '13.5px', outline: 'none' }}
         />
-        <button type="submit" disabled={!currentUserId} style={{ width: '40px', height: '40px', borderRadius: '50%', background: currentUserId ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentUserId ? 'pointer' : 'not-allowed', transition: 'transform 0.1s' }} onMouseDown={e => currentUserId && (e.currentTarget.style.transform = 'scale(0.95)')} onMouseUp={e => currentUserId && (e.currentTarget.style.transform = 'scale(1)')}>
+        <button type="submit" disabled={!currentUserId} style={{ width: '40px', height: '40px', borderRadius: '50%', background: currentUserId ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentUserId ? 'pointer' : 'not-allowed' }}>
           <Send size={15} />
         </button>
       </form>

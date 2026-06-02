@@ -133,7 +133,7 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Tambahkan flag penanda khusus 'dikirimOlehAdmin: true' pada optimistic update
+    // Optimistic Update instan di kanan
     setRoomMessages(prev => [...prev, {
       id: Date.now(),
       dikirimOlehAdmin: true,
@@ -158,6 +158,8 @@ export default function AdminChatsPage() {
         throw new Error(errData.message || 'Gagal mengirim ke server');
       }
 
+      // Paksa refresh data room detik itu juga agar data Mongo mengunci posisi kanan
+      await refreshRoomMessages(selectedUserId);
       fetchChatList(false);
     } catch (error: any) {
       alert(`Gagal mengirim balasan: ${error.message || 'Server Error'}`);
@@ -220,14 +222,11 @@ export default function AdminChatsPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                
-                // PERBAIKAN LOGIKA UTAMA:
-                // Teks adalah milik ADMIN (Kanan) jika:
-                // 1. Ini dari antrean kiriman instan (dikirimOlehAdmin === true)
-                // 2. ATAU pesan di database tersebut tidak membawa properti relasi objek 'user' data pembeli
+                // Logika pemisah admin kencang (jika tidak ada objek metadata user, berarti ketikan admin)
                 const isAdmin = 
                   msg.dikirimOlehAdmin === true || 
                   !msg.user || 
+                  msg.isFromUser === false ||
                   msg.role === 'admin' || 
                   msg.sender === 'admin';
 
