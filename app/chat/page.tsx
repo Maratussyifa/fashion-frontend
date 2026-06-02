@@ -76,10 +76,10 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
+    // Optimistic update lokal dikunci sebagai User (Kanan)
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
-      isFromUser: true,
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -141,13 +141,12 @@ export default function UserChatPage() {
             const text = msg.content || msg.text || msg.message || '';
             if (!text.trim()) return null;
 
-            // 🚨 KUNCI UTAMA DI USER PANEL:
-            // Jika ada tanda-tanda 'false' murni atau object role admin, berarti itu ADMIN (Kiri).
-            // Jika kosong, true, atau ketikan lokal, berarti USER itu sendiri (Kanan).
-            const isFromUserFalse = msg.isFromUser === false || String(msg.isFromUser) === 'false';
-            const adakahBauAdmin = isFromUserFalse || msg.sender === 'admin' || msg.role === 'admin';
+            // 🚨 KUNCI UTAMA DI PANEL USER:
+            // Jika data membawa objek 'user', berarti dikirim oleh USER itu sendiri (taruh di KANAN).
+            // Jika objek 'user' tidak ditemukan atau null, berarti itu balasan dari Admin/CS (taruh di KIRI).
+            const adakahDataUser = msg.user && (msg.user._id || msg.user.id || typeof msg.user === 'string');
+            const isMe = msg.isBawaanLokalUser === true || adakahDataUser;
 
-            const isMe = msg.isBawaanLokalUser === true || !adakahBauAdmin;
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (
