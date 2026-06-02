@@ -78,11 +78,13 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update instan di kanan user (isBawaanLokalUser = true)
+    // Optimistic Update: Samakan struktur murninya agar langsung menetap di kanan
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
       isFromUser: true,
+      sender: 'user',
+      role: 'user',
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -142,34 +144,39 @@ export default function UserChatPage() {
         ) : (
           messages.map((msg: any, idx: number) => {
             
-            // 🚨 LOGIKA SAPU JAGAT SISI USER 🚨
-            // Di layar user: Chat USER sendiri wajib di KANAN (isMe = true)
-            // Chat Balasan CS/ADMIN wajib di KIRI (isMe = false)
+            // Evaluasi Boolean murni & string matching yang fleksibel dan aman
             const isFromUserTrue = msg.isFromUser === true || String(msg.isFromUser) === 'true';
             
+            // Penentu posisi kanan (Milik User Sendiri)
             const isMe = 
               msg.isBawaanLokalUser === true || 
-              (isFromUserTrue === true && msg.sender !== 'admin' && msg.role !== 'admin');
+              msg.sender === 'user' || 
+              msg.role === 'user' ||
+              (isFromUserTrue && msg.sender !== 'admin' && msg.role !== 'admin');
 
             const text = msg.content || msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             if (!text.trim()) return null;
 
             return (
-              <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                <div style={{
-                  background: isMe ? '#0a1628' : '#ffffff', // Ketikan User = Gelap (Kanan), Ketikan Admin = Putih (Kiri)
-                  color: isMe ? '#ffffff' : '#1e293b',
-                  padding: '10px 14px',
-                  borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                  fontSize: '13.5px',
-                  border: isMe ? 'none' : '1px solid #e2e8f0',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {text}
+              // Menggunakan row wrapper dengan penataan penuh agar struktur vertikal lurus sempurna
+              <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                  <div style={{
+                    background: isMe ? '#0a1628' : '#ffffff', 
+                    color: isMe ? '#ffffff' : '#1e293b',
+                    padding: '10px 14px',
+                    borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                    fontSize: '13.5px',
+                    border: isMe ? 'none' : '1px solid #e2e8f0',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}>
+                    {text}
+                  </div>
+                  <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', paddingLeft: '4px', paddingRight: '4px' }}>{time}</span>
                 </div>
-                <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>{time}</span>
               </div>
             );
           })
@@ -187,7 +194,7 @@ export default function UserChatPage() {
           placeholder={hasToken ? "Ketik pesan Anda di sini..." : "Silakan login terlebih dahulu..."}
           style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', outline: 'none' }}
         />
-        <button type="submit" disabled={!hasToken} style={{ width: '40px', height: '40px', borderRadius: '50%', background: hasToken ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button type="submit" disabled={!hasToken} style={{ width: '40px', height: '40px', borderRadius: '50%', background: hasToken ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <Send size={15} />
         </button>
       </form>
