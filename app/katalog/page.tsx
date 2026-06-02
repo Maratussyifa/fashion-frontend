@@ -1,8 +1,8 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react'; // Menambahkan Suspense di sini
 import Link from 'next/link';
-import { ArrowLeft, ChevronRight } from 'lucide-react'; // Membersihkan Heart & ShoppingCart
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 
 // Data Produk Lokal
 const EXISTING_PRODUCTS = [
@@ -14,7 +14,8 @@ const EXISTING_PRODUCTS = [
   { id: 6, name: 'Classic Denim Jacket', price: 420000, category: 'Outerwear', image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500' },
 ];
 
-export default function KatalogPage() {
+// Komponen Konten Utama (Dipisahkan agar bisa dibungkus Suspense)
+function KatalogContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   
@@ -140,7 +141,7 @@ export default function KatalogPage() {
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="product-card">
                     
-                    {/* Pembungkus Gambar Produk (Ikon Heart dihapus) */}
+                    {/* Pembungkus Gambar Produk */}
                     <div style={{ width: '100%', height: '320px', background: '#f1f5f9', position: 'relative', overflow: 'hidden' }}>
                       <img 
                         src={product.image || 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500'} 
@@ -152,7 +153,7 @@ export default function KatalogPage() {
                       />
                     </div>
 
-                    {/* Informasi Detail (Tombol + Keranjang dihapus) */}
+                    {/* Informasi Detail */}
                     <div style={{ padding: '18px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{product.category}</span>
                       <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a', margin: '6px 0 14px 0', height: '44px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.4' }}>
@@ -267,5 +268,14 @@ export default function KatalogPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Export default yang dibungkus dengan Suspense Boundary
+export default function KatalogPage() {
+  return (
+    <Suspense fallback={<div style={{ paddingTop: '100px', textAlign: 'center', color: '#64748b' }}>Memuat Aplikasi Katalog...</div>}>
+      <KatalogContent />
+    </Suspense>
   );
 }
