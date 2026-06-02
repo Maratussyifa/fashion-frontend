@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation'; 
 import Link from 'next/link';
 
@@ -87,7 +87,8 @@ function renderCategoryIcon(slug: string, isActive: boolean) {
   }
 }
 
-export default function HomePage() {
+// 1. Komponen Utama Konten yang membaca useSearchParams
+function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   const urlSearchQuery = searchParams.get('search') ?? '';
@@ -156,7 +157,7 @@ export default function HomePage() {
         console.error("Gagal sinkronisasi data wishlist awal:", err);
       }
     }
-    if (localStorage.getItem('token')) {
+    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
       syncWishlistFromServer();
     }
   }, []);
@@ -229,9 +230,8 @@ export default function HomePage() {
         {/* Hero Section Premium */}
         {!isFiltered && (
           <div style={{ position: 'relative', minHeight: '82vh', padding: '100px 0 90px 0', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-            <img src="/catalog2.jpg" alt="AIGNE Collection" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center' }} />
+            <img src="/catalog2.jpg" alt="SHINE Collection" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(95deg, rgba(10,22,44,0.85) 0%, rgba(10,22,44,0.65) 40%, rgba(10,22,44,0.2) 70%, transparent 100%)' }} />
-            
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 220, background: 'linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.4) 70%, transparent 100%)' }} />
             
             <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', width: '100%', padding: '0 24px' }}>
@@ -239,7 +239,6 @@ export default function HomePage() {
                 <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(38px, 4.8vw, 56px)', fontWeight: 800, color: '#ffffff', lineHeight: 1.25, marginBottom: 18 }}>
                   Wear Your Story,<br /><span style={{ color: '#93c5fd' }}>Defined by You</span>
                 </h1>
-                
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, lineHeight: 1.8, marginBottom: 36, maxWidth: 500 }}>
                   Fashion premium yang mencerminkan siapa dirimu. Temukan koleksi pakaian eksklusif dan terbaik dari kami.
                 </p>
@@ -249,8 +248,6 @@ export default function HomePage() {
                     style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '12px', padding: '16px 36px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(37,99,235,0.3)' }}>
                     Belanja Sekarang →
                   </button>
-                  
-                  {/* SEKARANG DIARAHKAN KE /katalog */}
                   <button onClick={() => router.push('/katalog')}
                     style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: '12px', padding: '16px 36px', fontSize: 15, fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(8px)' }}>
                     Lihat Katalog
@@ -298,7 +295,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* STATUS BAR PENCERIAN */}
+        {/* Status Bar Pencarian */}
         {searchQuery && (
           <div style={{ maxWidth: 1280, margin: '24px auto 0', padding: '0 24px' }}>
             <div style={{ color: '#64748b', fontSize: '14px', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -390,5 +387,14 @@ function ProductGrid({ products, router, wishlist, toggleWishlist }: { products:
         );
       })}
     </div>
+  );
+}
+
+// 2. Export default dibungkus Suspense Boundary agar lolos vercel build
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '100px', color: '#64748b' }}>Loading Home Component...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
