@@ -50,7 +50,6 @@ export default function UserChatPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // GET /chat/my
   async function fetchMyMessages() {
     try {
       const token = getUserToken();
@@ -70,7 +69,6 @@ export default function UserChatPage() {
     }
   }
 
-  // POST /chat/send
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!inputText.trim()) return;
@@ -78,13 +76,10 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // OPTIMISTIC UPDATE: Langsung kunci di kanan (isBawaanLokalUser = true)
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
       isFromUser: true,
-      sender: 'user',
-      role: 'user',
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -129,8 +124,8 @@ export default function UserChatPage() {
         </Link>
       </div>
 
-      {/* KONTANER UTAMA BOX PESAN USER */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
+      {/* BOX PESAN USER */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '14px', background: '#f4f6f9' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>Menghubungkan...</div>
         ) : !hasToken ? (
@@ -146,39 +141,27 @@ export default function UserChatPage() {
             const text = msg.content || msg.text || msg.message || '';
             if (!text.trim()) return null;
 
-            // 🚨 LOGIKA SELEKSI ELIMINASI ADMIN (Sangat Agresif) 🚨
-            // Kita cari tahu apakah ada tanda-tanda pesan ini milik Admin
+            // 🚨 KUNCI UTAMA DI USER PANEL:
+            // Jika ada tanda-tanda 'false' murni atau object role admin, berarti itu ADMIN (Kiri).
+            // Jika kosong, true, atau ketikan lokal, berarti USER itu sendiri (Kanan).
             const isFromUserFalse = msg.isFromUser === false || String(msg.isFromUser) === 'false';
-            
-            const adakahBauAdmin = 
-              isFromUserFalse || 
-              msg.sender === 'admin' || 
-              msg.role === 'admin' || 
-              msg.sender === 'cs' ||
-              (msg.user && (msg.user.role === 'admin' || msg.user.role === 'superadmin'));
+            const adakahBauAdmin = isFromUserFalse || msg.sender === 'admin' || msg.role === 'admin';
 
-            // Jika ada bau admin, pasang di KIRI (isMe = false). 
-            // Jika TIDAK ada bau admin, atau ini tiruan lokal, paksa ke KANAN (isMe = true).
             const isMe = msg.isBawaanLokalUser === true || !adakahBauAdmin;
-
-            // Log monitoring untuk inspect element browser
-            console.log(`User Room -> Text: "${text}" | Bau Admin: ${adakahBauAdmin} | Posisi Kanan: ${isMe}`);
-
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (
-              /* Pembungkus 100% full width agar bubble tidak bisa naik-turun selap-selip */
               <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
                   <div style={{
-                    background: isMe ? '#0a1628' : '#ffffff', // User sendiri = Gelap (Kanan), CS/Admin = Putih (Kiri)
+                    background: isMe ? '#0a1628' : '#ffffff', 
                     color: isMe ? '#ffffff' : '#1e293b',
-                    padding: '10px 16px',
+                    padding: '10px 16.5px',
                     borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
                     fontSize: '13.5px',
                     lineHeight: '1.5',
                     border: isMe ? 'none' : '1px solid #e2e8f0',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word'
                   }}>

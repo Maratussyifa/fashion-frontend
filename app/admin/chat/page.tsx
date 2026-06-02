@@ -67,7 +67,6 @@ export default function AdminChatsPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [roomMessages]);
 
-  // GET /chat/all
   async function fetchChatList(showLoadingSpinner = false) {
     try {
       if (showLoadingSpinner) setLoadingList(true);
@@ -97,7 +96,6 @@ export default function AdminChatsPage() {
     }
   }
 
-  // GET /chat/user/{userId}
   async function refreshRoomMessages(userId: string | number) {
     try {
       const res = await authFetch(`/chat/user/${userId}`);
@@ -117,9 +115,6 @@ export default function AdminChatsPage() {
       if (!res.ok) throw new Error();
       const result = await res.json();
       const messagesArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
-      
-      console.log("=== SELECTION DATA ARRAY ===", messagesArray);
-      
       setRoomMessages(messagesArray);
     } catch (err) {
       console.error(err);
@@ -128,7 +123,6 @@ export default function AdminChatsPage() {
     }
   }
 
-  // POST /chat/reply/{userId}
   async function handleSendReply(e: React.FormEvent) {
     e.preventDefault();
     if (!replyText.trim() || !selectedUserId) return;
@@ -136,11 +130,12 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic Update instan dipaksa di kanan
+    // OPTIMISTIC UPDATE: Langsung dipaksa kunci di KANAN ADMIN
     setRoomMessages(prev => [...prev, {
       id: `local-${Date.now()}`,
       isBawaanLokalAdmin: true,
       isFromUser: false, 
+      sender: 'admin',
       content: currentReply, 
       text: currentReply, 
       message: currentReply, 
@@ -156,9 +151,7 @@ export default function AdminChatsPage() {
           message: currentReply 
         })
       });
-
       if (!res.ok) throw new Error('Gagal membalas chat');
-      
       await refreshRoomMessages(selectedUserId);
       fetchChatList(false);
     } catch (error) {
@@ -169,7 +162,7 @@ export default function AdminChatsPage() {
   return (
     <div style={{ height: '100vh', display: 'flex', width: '100%', overflow: 'hidden', background: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* KIRI: DAFTAR USER */}
+      {/* LEFT SIDE: USER LIST */}
       <div style={{ width: '360px', background: '#ffffff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -209,45 +202,44 @@ export default function AdminChatsPage() {
         </div>
       </div>
 
-      {/* KANAN: RUANG CHAT */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* RIGHT SIDE: CHAT ROOM */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
         {selectedUserId ? (
           <>
             <div style={{ background: '#ffffff', padding: '16px 24px', borderBottom: '1px solid #e2e8f0' }}>
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Membalas: {selectedUserName}</h3>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                
-                // 🚨 INTEGRASI LOGIKA SAPU JAGAT KOMPLIT BERDASARKAN STRING BOOLEAN DETECTOR 🚨
                 const textContent = msg.content || msg.text || msg.message || '';
-                
-                const isFromUserTrue = msg.isFromUser === true || String(msg.isFromUser) === 'true';
-                
-                const isAdmin = 
-                  msg.isBawaanLokalAdmin === true || 
-                  isFromUserTrue === false || 
-                  msg.sender === 'admin' || 
-                  msg.role === 'admin' ||
-                  (msg.user && (msg.user.role === 'admin' || msg.user.role === 'superadmin'));
-
-                // Log pembantu untuk memantau status bubble langsung dari browser
-                console.log(`Msg: "${textContent}" -> isFromUserRaw:`, msg.isFromUser, "-> TerbacaAdmin:", isAdmin);
-
                 if (!textContent.trim()) return null;
 
+                // 🚨 KUNCI UTAMA DI ADMIN PANEL: 
+                // Jika isFromUser bernilai TRUE murni, berarti itu mutlak ketikan USER (taruh di KIRI).
+                // Jika isFromUser bernilai FALSE atau kosong, atau dari tiruan lokal, berarti itu ADMIN (taruh di KANAN).
+                const isFromUserRaw = msg.isFromUser === true || String(msg.isFromUser) === 'true';
+                
+                // Admin = Kanan, User = Kiri
+                const isAdmin = msg.isBawaanLokalAdmin === true || !isFromUserRaw;
+
                 return (
-                  <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isAdmin ? 'flex-end' : 'flex-start', alignSelf: isAdmin ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                    <div style={{ 
-                      background: isAdmin ? '#0a1628' : '#ffffff', 
-                      color: isAdmin ? '#ffffff' : '#1e293b', 
-                      padding: '10px 14px', 
-                      borderRadius: isAdmin ? '12px 12px 2px 12px' : '12px 12px 12px 2px', 
-                      fontSize: '13px', 
-                      border: isAdmin ? 'none' : '1px solid #e2e8f0'
-                    }}>
-                      {textContent}
+                  <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isAdmin ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAdmin ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
+                      <div style={{ 
+                        background: isAdmin ? '#0a1628' : '#ffffff', 
+                        color: isAdmin ? '#ffffff' : '#1e293b', 
+                        padding: '10px 16px', 
+                        borderRadius: isAdmin ? '16px 16px 2px 16px' : '16px 16px 16px 2px', 
+                        fontSize: '13px', 
+                        lineHeight: '1.5',
+                        border: isAdmin ? 'none' : '1px solid #e2e8f0',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {textContent}
+                      </div>
                     </div>
                   </div>
                 );
@@ -256,8 +248,8 @@ export default function AdminChatsPage() {
             </div>
 
             <form onSubmit={handleSendReply} style={{ background: '#ffffff', padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '12px' }}>
-              <input type="text" value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Tulis balasan resmi admin..." style={{ flex: 1, height: '40px', padding: '0 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-              <button type="submit" style={{ background: '#0a1628', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Kirim Balas</button>
+              <input type="text" value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Tulis balasan resmi admin..." style={{ flex: 1, height: '42px', padding: '0 16px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '13.5px' }} />
+              <button type="submit" style={{ background: '#0a1628', color: '#fff', border: 'none', padding: '0 22px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '13.5px' }}>Kirim Balas</button>
             </form>
           </>
         ) : (
