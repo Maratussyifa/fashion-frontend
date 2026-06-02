@@ -6,18 +6,15 @@ import { Send, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
-// PERBAIKAN 1: Ekstraksi token yang jauh lebih ketat dan mendalam
 function getUserToken(): string | null {
   if (typeof window === 'undefined') return null;
   
-  // Cek daftar kata kunci nama token yang biasa tersimpan di localStorage
   const keys = ['token', 'accessToken', 'jwt', 'user_token', 'admin_token', 'access_token'];
   for (const key of keys) {
     const val = localStorage.getItem(key);
     if (val && val !== 'undefined' && val !== 'null') return val;
   }
 
-  // Cek jika token ternyata dibungkus di dalam JSON objek 'user'
   const userData = localStorage.getItem('user');
   if (userData) {
     try {
@@ -59,7 +56,7 @@ export default function UserChatPage() {
       if (finalId && finalId !== 'undefined' && finalId !== 'null') {
         setCurrentUserId(String(finalId));
       } else if (tokenEksis) {
-        setCurrentUserId('4'); // Disesuaikan dengan ID user aktif dari log eror kamu tadi yaitu "/user/4"
+        setCurrentUserId('4'); 
       } else {
         setCurrentUserId(null);
       }
@@ -86,7 +83,6 @@ export default function UserChatPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // PERBAIKAN 2: Menyuntikkan Authorization Bearer Header secara aman untuk mencegah 403 Forbidden
   async function fetchMyMessages(userId: string) {
     try {
       const token = getUserToken();
@@ -118,11 +114,13 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update: Langsung muncul di UI kanan (isFromUser: true)
+    // Optimistic Update: Ketikan user langsung muncul di kanan (isFromUser: true)
     const localMsg = {
       id: Date.now(),
       isFromUser: true, 
       text: currentMsg,
+      content: currentMsg,
+      message: currentMsg,
       createdAt: new Date().toISOString()
     };
     setMessages(prev => [...prev, localMsg]);
@@ -137,7 +135,8 @@ export default function UserChatPage() {
         },
         body: JSON.stringify({ 
           text: currentMsg,
-          message: currentMsg
+          message: currentMsg,
+          content: currentMsg
         })
       });
       
@@ -182,14 +181,30 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            const isMe = msg.isFromUser === true;
+            // PERBAIKAN UTAMA: Deteksi berlapis untuk membedakan ketikan user sendiri vs balasan admin
+            // isMe = true artinya pesan dari USER SENDIRI (Kanan - Gelap)
+            // isMe = false artinya pesan dari ADMIN/SYSTEM (Kiri - Putih)
+            const isMe = 
+              msg.isFromUser === true || 
+              msg.role === 'user' || 
+              msg.sender === 'user';
+
             const text = msg.text || msg.message || msg.content || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             
             if (!text.trim()) return null;
 
             return (
-              <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+              <div 
+                key={msg.id || msg._id || idx} 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: isMe ? 'flex-end' : 'flex-start', 
+                  alignSelf: isMe ? 'flex-end' : 'flex-start', 
+                  maxWidth: '75%' 
+                }}
+              >
                 <div style={{
                   background: isMe ? '#0a1628' : '#ffffff',
                   color: isMe ? '#ffffff' : '#1e293b',

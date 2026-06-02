@@ -3,22 +3,18 @@ import { useState, useEffect, useRef } from 'react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
-// PERBAIKAN: Deteksi token admin yang jauh lebih mendalam dan fleksibel
 function getValidToken(): string | null {
   if (typeof window === 'undefined') return null;
   
-  // 1. Cek bypass manual terlebih dahulu
   const manualToken = localStorage.getItem('manual_admin_token');
   if (manualToken) return manualToken;
 
-  // 2. Cek semua variasi nama key yang berpotensi menyimpan token admin/user
   const directKeys = ['token', 'accessToken', 'jwt', 'admin_token', 'user_token', 'access_token'];
   for (const key of directKeys) {
     const val = localStorage.getItem(key);
     if (val && val !== 'undefined' && val !== 'null') return val;
   }
 
-  // 3. Cek jika token admin dibungkus di dalam objek JSON 'user' atau 'admin'
   const userData = localStorage.getItem('user') || localStorage.getItem('admin');
   if (userData) {
     try {
@@ -61,7 +57,6 @@ export default function AdminChatsPage() {
     fetchChatList(true);
   }, []);
 
-  // Sinkronisasi background data interval
   useEffect(() => {
     const interval = setInterval(() => {
       fetchChatList(false); 
@@ -138,10 +133,11 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic update admin disesuaikan menjadi isFromUser: false (Karena ini kiriman admin)
+    // Optimistic Update diperketat dengan penanda flag custom kustomIsAdmin
     setRoomMessages(prev => [...prev, {
       id: Date.now(),
       isFromUser: false, 
+      kustomIsAdmin: true,
       content: currentReply,
       text: currentReply,
       message: currentReply,
@@ -225,7 +221,14 @@ export default function AdminChatsPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                const isAdmin = msg.isFromUser === false;
+                // PERBAIKAN LOGIKA: Pesan adalah milik admin jika kustomIsAdmin aktif, atau isFromUser secara tegas bernilai false/undefined.
+                const isAdmin = 
+                  msg.kustomIsAdmin === true ||
+                  msg.isFromUser === false || 
+                  msg.isFromUser === undefined ||
+                  msg.role === 'admin' ||
+                  msg.sender === 'admin';
+
                 const textContent = msg.content || msg.text || msg.message || '';
                 if (!textContent.trim()) return null;
 
