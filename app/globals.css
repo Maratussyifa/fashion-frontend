@@ -1,26 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --blue-900: #0a1628;
+  --blue-800: #0f2040;
+  --blue-700: #1a3460;
+  --blue-600: #1e4080;
+  --blue-500: #2563eb;
+  --blue-400: #3b82f6;
+  --blue-300: #93c5fd;
+  --blue-100: #dbeafe;
+  --blue-50: #eff6ff;
+  --accent: #f59e0b;
+  --accent-light: #fef3c7;
+  --white: #ffffff;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-500: #64748b;
+  --gray-700: #334155;
+  --gray-900: #0f172a;
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html { 
+  scroll-behavior: smooth; 
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+body { 
+  font-family: 'DM Sans', sans-serif; 
+  background: var(--gray-50); 
+  color: var(--gray-900); 
+  -webkit-font-smoothing: antialiased; 
+}
+
+h1, h2, h3 { 
+  font-family: 'Playfair Display', serif; 
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { 
+  width: 6px; 
+  height: 6px; 
+}
+::-webkit-scrollbar-track { 
+  background: var(--gray-100); 
+}
+::-webkit-scrollbar-thumb { 
+  background: var(--blue-300); 
+  border-radius: 3px; 
+}
+
+/* Animasi */
+@keyframes fadeInUp { 
+  from { opacity: 0; transform: translateY(20px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+.animate-fade-up { 
+  animation: fadeInUp 0.5s ease forwards; 
+}
+.animate-fade-in { 
+  animation: fadeIn 0.4s ease forwards; 
+}
+
+/* Efek Staggered */
+.stagger > * { 
+  opacity: 0; 
+  animation: fadeInUp 0.5s ease forwards; 
+}
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger > *:nth-child(n+7) { animation-delay: 0.35s; }
+
+/* Komponen Tombol */
+.btn-primary { 
+  background: var(--blue-500); 
+  color: white; 
+  border: none; 
+  padding: 0.625rem 1.5rem; 
+  border-radius: 8px; 
+  font-family: 'DM Sans', sans-serif; 
+  font-weight: 500; 
+  font-size: 0.9rem; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0.4rem; 
+}
+.btn-primary:hover { 
+  background: var(--blue-600); 
+  transform: translateY(-1px); 
+  box-shadow: 0 4px 12px rgba(37,99,235,0.3); 
+}
+.btn-primary:disabled { 
+  opacity: 0.6; 
+  cursor: not-allowed; 
+  transform: none; 
+  box-shadow: none;
+}
+
+.btn-outline { 
+  background: transparent; 
+  color: var(--blue-500); 
+  border: 1.5px solid var(--blue-500); 
+  padding: 0.625rem 1.5rem; 
+  border-radius: 8px; 
+  font-family: 'DM Sans', sans-serif; 
+  font-weight: 500; 
+  font-size: 0.9rem; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0.4rem; 
+}
+.btn-outline:hover { 
+  background: var(--blue-50); 
+}
+
+.btn-danger { 
+  background: var(--danger); 
+  color: white; 
+  border: none; 
+  padding: 0.5rem 1rem; 
+  border-radius: 8px; 
+  font-family: 'DM Sans', sans-serif; 
+  font-weight: 500; 
+  font-size: 0.875rem; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+}
+.btn-danger:hover { 
+  background: #dc2626; 
+}
+
+/* Kartu & Form Input */
+.card { 
+  background: white; 
+  border-radius: 16px; 
+  border: 1px solid var(--gray-200); 
+  overflow: hidden; 
+  transition: box-shadow 0.2s, transform 0.2s; 
+}
+
+.input-field { 
+  width: 100%; 
+  padding: 0.75rem 1rem; 
+  border: 1.5px solid var(--gray-200); 
+  border-radius: 10px; 
+  font-family: 'DM Sans', sans-serif; 
+  font-size: 0.9rem; 
+  color: var(--gray-900); 
+  background: white; 
+  transition: border-color 0.2s, box-shadow 0.2s; 
+  outline: none; 
+}
+.input-field:focus { 
+  border-color: var(--blue-500); 
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1); 
+}
+.input-field::placeholder { 
+  color: var(--gray-500); 
+}
+
+label { 
+  display: block; 
+  font-size: 0.85rem; 
+  font-weight: 500; 
+  color: var(--gray-700); 
+  margin-bottom: 0.375rem; 
+}
+
+/* Badge Penanda Status */
+.badge { 
+  display: inline-flex; 
+  align-items: center; 
+  padding: 0.2rem 0.6rem; 
+  border-radius: 999px; 
+  font-size: 0.7rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em; 
+}
+.badge-new { background: var(--blue-100); color: var(--blue-600); }
+.badge-trending { background: var(--accent-light); color: #92400e; }
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-success { background: #d1fae5; color: #065f46; }
+
+/* Layout */
+.page-wrapper { 
+  min-height: 100vh; 
+}
+.page-content { 
+  max-width: 1280px; 
+  margin: 0 auto; 
+  padding: 2rem 1.5rem; 
+}
+
+.section-title { 
+  font-family: 'Playfair Display', serif; 
+  font-size: 2rem; 
+  color: var(--blue-900); 
+  margin-bottom: 0.5rem; 
+}
+.section-subtitle { 
+  font-size: 0.95rem; 
+  color: var(--gray-500); 
+  margin-bottom: 2rem; 
+}
+.section-divider { 
+  width: 48px; 
+  height: 3px; 
+  background: var(--blue-500); 
+  border-radius: 2px; 
+  margin: 0.75rem 0 2rem; 
+}
+
+.hero-gradient { 
+  background: linear-gradient(135deg, #0a1628 0%, #1a3460 50%, #1e4080 100%); 
+}
+
+/* Kartu Katalog Produk */
+.product-card { 
+  cursor: pointer; 
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+}
+.product-card:hover { 
+  transform: translateY(-6px); 
+  box-shadow: 0 20px 40px rgba(10, 22, 40, 0.08); 
+}
+
+/* Sisi Manajemen Admin */
+.admin-sidebar { 
+  background: var(--blue-900); 
+  min-height: 100vh; 
+  width: 260px; 
+  flex-shrink: 0; 
+}
+
+/* Data Table */
+.data-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+}
+.data-table th { 
+  padding: 0.75rem 1rem; 
+  text-align: left; 
+  font-size: 0.8rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em; 
+  color: var(--gray-500); 
+  border-bottom: 1px solid var(--gray-200); 
+  background: var(--gray-50); 
+}
+.data-table td { 
+  padding: 1rem; 
+  border-bottom: 1px solid var(--gray-100); 
+  font-size: 0.875rem; 
+  color: var(--gray-700); 
+  transition: background-color 0.2s ease;
+}
+.data-table tr:hover td { 
+  background: var(--blue-50); 
+}
+
+/* Chat */
+.chat-bubble-user { 
+  background: var(--blue-500); 
+  color: white; 
+  border-radius: 18px 18px 4px 18px; 
+  padding: 0.75rem 1rem; 
+  max-width: 70%; 
+  margin-left: auto; 
+}
+.chat-bubble-admin { 
+  background: white; 
+  color: var(--gray-900); 
+  border: 1px solid var(--gray-200); 
+  border-radius: 18px 18px 18px 4px; 
+  padding: 0.75rem 1rem; 
+  max-width: 70%; 
+}
+.stat-card { 
+  background: white; 
+  border-radius: 16px; 
+  padding: 1.5rem; 
+  border: 1px solid var(--gray-200); 
 }
