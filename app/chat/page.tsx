@@ -22,6 +22,19 @@ function getUserToken(): string | null {
   return null;
 }
 
+// Mengambil ID User dari localStorage untuk dicocokkan
+function getMyId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      const parsed = JSON.parse(userData);
+      return parsed.id || parsed._id || parsed.user?.id || parsed.user?._id || null;
+    } catch (e) {}
+  }
+  return null;
+}
+
 export default function UserChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -76,10 +89,13 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic update lokal dikunci sebagai User (Kanan)
+    // Ambil ID saya sendiri secara real-time
+    const myId = getMyId();
+
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
+      userId: myId, // Pasang ID kita langsung agar dibaca di Kanan
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -141,12 +157,14 @@ export default function UserChatPage() {
             const text = msg.content || msg.text || msg.message || '';
             if (!text.trim()) return null;
 
-            // 🚨 KUNCI UTAMA DI PANEL USER:
-            // Jika data membawa objek 'user', berarti dikirim oleh USER itu sendiri (taruh di KANAN).
-            // Jika objek 'user' tidak ditemukan atau null, berarti itu balasan dari Admin/CS (taruh di KIRI).
-            const adakahDataUser = msg.user && (msg.user._id || msg.user.id || typeof msg.user === 'string');
-            const isMe = msg.isBawaanLokalUser === true || adakahDataUser;
+            // 🚨 LOGIKA MUTLAK SISI USER:
+            const myId = getMyId();
+            const msgUserId = msg.userId || msg.user?._id || msg.user?.id || msg.user;
 
+            // Jika ada ID pengirim di pesan database, dan itu COCOK dengan ID saya di localStorage, atau tiruan lokal, taruh di KANAN (isMe = true).
+            // Kalau tidak punya ID user atau berbeda (berarti dari Admin), taruh di KIRI (isMe = false).
+            const isMe = msg.isBawaanLokalUser === true || (msgUserId && myId && String(msgUserId) === String(myId));
+            
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (
