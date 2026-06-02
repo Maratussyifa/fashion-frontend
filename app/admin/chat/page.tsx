@@ -128,10 +128,10 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic Update Lokal: langsung kunci di kanan admin
+    // Temp lokal langsung dipasang label sender: "admin"
     setRoomMessages(prev => [...prev, {
       id: `local-${Date.now()}`,
-      isBawaanLokalAdmin: true,
+      sender: 'admin',
       content: currentReply, 
       text: currentReply, 
       message: currentReply, 
@@ -158,7 +158,7 @@ export default function AdminChatsPage() {
   return (
     <div style={{ height: '100vh', display: 'flex', width: '100%', overflow: 'hidden', background: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* DAFTAR USER (KILI) */}
+      {/* DAFTAR USER */}
       <div style={{ width: '360px', background: '#ffffff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -184,7 +184,7 @@ export default function AdminChatsPage() {
         </div>
       </div>
 
-      {/* ROOM CHAT (KANAN) */}
+      {/* ROOM CHAT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
         {selectedUserId ? (
           <>
@@ -197,14 +197,9 @@ export default function AdminChatsPage() {
                 const textContent = msg.content || msg.text || msg.message || '';
                 if (!textContent.trim()) return null;
 
-                // 🚨 LOGIKA MUTLAK SISI ADMIN:
-                // Cari tahu ID pengirim pesan ini dari database.
-                const msgUserId = msg.userId || msg.user?._id || msg.user?.id || msg.user;
-                
-                // Jika ID pesan COCOK dengan ID user yang sedang aktif dibuka, berarti ini pesan USER (KIRI).
-                // Jika TIDAK cocok atau kosong, atau dari kiriman lokal, berarti ini ADMIN (KANAN).
-                const isUserChat = msgUserId && String(msgUserId) === String(selectedUserId);
-                const isAdmin = msg.isBawaanLokalAdmin === true || !isUserChat;
+                // 🚨 LOGIKA MUTLAK SISI ADMIN DENGAN SENDER BARU:
+                // Di layar admin, kalau labelnya 'admin', taruh KANAN. Kalau 'user', taruh KIRI.
+                const isAdmin = msg.sender === 'admin';
 
                 return (
                   <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isAdmin ? 'flex-end' : 'flex-start' }}>

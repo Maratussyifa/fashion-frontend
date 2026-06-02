@@ -22,19 +22,6 @@ function getUserToken(): string | null {
   return null;
 }
 
-// Mengambil ID User dari localStorage untuk dicocokkan
-function getMyId(): string | null {
-  if (typeof window === 'undefined') return null;
-  const userData = localStorage.getItem('user');
-  if (userData) {
-    try {
-      const parsed = JSON.parse(userData);
-      return parsed.id || parsed._id || parsed.user?.id || parsed.user?._id || null;
-    } catch (e) {}
-  }
-  return null;
-}
-
 export default function UserChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -89,13 +76,10 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Ambil ID saya sendiri secara real-time
-    const myId = getMyId();
-
+    // Temp lokal langsung dipasang label sender: "user"
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
-      isBawaanLokalUser: true,
-      userId: myId, // Pasang ID kita langsung agar dibaca di Kanan
+      sender: 'user',
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
@@ -157,13 +141,9 @@ export default function UserChatPage() {
             const text = msg.content || msg.text || msg.message || '';
             if (!text.trim()) return null;
 
-            // 🚨 LOGIKA MUTLAK SISI USER:
-            const myId = getMyId();
-            const msgUserId = msg.userId || msg.user?._id || msg.user?.id || msg.user;
-
-            // Jika ada ID pengirim di pesan database, dan itu COCOK dengan ID saya di localStorage, atau tiruan lokal, taruh di KANAN (isMe = true).
-            // Kalau tidak punya ID user atau berbeda (berarti dari Admin), taruh di KIRI (isMe = false).
-            const isMe = msg.isBawaanLokalUser === true || (msgUserId && myId && String(msgUserId) === String(myId));
+            // 🚨 LOGIKA MUTLAK SISI USER DENGAN SENDER BARU:
+            // Di layar user, kalau labelnya 'user', taruh KANAN (milik dia sendiri). Kalau 'admin', taruh KIRI.
+            const isMe = msg.sender === 'user';
             
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
