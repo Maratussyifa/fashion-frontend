@@ -133,11 +133,10 @@ export default function AdminChatsPage() {
     const currentReply = replyText;
     setReplyText('');
 
-    // Optimistic Update diperketat dengan penanda flag custom kustomIsAdmin
+    // Tambahkan flag penanda khusus 'dikirimOlehAdmin: true' pada optimistic update
     setRoomMessages(prev => [...prev, {
       id: Date.now(),
-      isFromUser: false, 
-      kustomIsAdmin: true,
+      dikirimOlehAdmin: true,
       content: currentReply,
       text: currentReply,
       message: currentReply,
@@ -221,12 +220,15 @@ export default function AdminChatsPage() {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc' }}>
               {roomMessages.map((msg: any, idx: number) => {
-                // PERBAIKAN LOGIKA: Pesan adalah milik admin jika kustomIsAdmin aktif, atau isFromUser secara tegas bernilai false/undefined.
+                
+                // PERBAIKAN LOGIKA UTAMA:
+                // Teks adalah milik ADMIN (Kanan) jika:
+                // 1. Ini dari antrean kiriman instan (dikirimOlehAdmin === true)
+                // 2. ATAU pesan di database tersebut tidak membawa properti relasi objek 'user' data pembeli
                 const isAdmin = 
-                  msg.kustomIsAdmin === true ||
-                  msg.isFromUser === false || 
-                  msg.isFromUser === undefined ||
-                  msg.role === 'admin' ||
+                  msg.dikirimOlehAdmin === true || 
+                  !msg.user || 
+                  msg.role === 'admin' || 
                   msg.sender === 'admin';
 
                 const textContent = msg.content || msg.text || msg.message || '';

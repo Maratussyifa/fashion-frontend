@@ -114,12 +114,13 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Optimistic Update: Ketikan user langsung muncul di kanan (isFromUser: true)
+    // Optimistic Update khusus user sendiri (Kanan - Gelap)
     const localMsg = {
       id: Date.now(),
       isFromUser: true, 
-      text: currentMsg,
+      dikirimOlehUserSitus: true, // Flag pengunci lokal
       content: currentMsg,
+      text: currentMsg,
       message: currentMsg,
       createdAt: new Date().toISOString()
     };
@@ -134,9 +135,9 @@ export default function UserChatPage() {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ 
+          content: currentMsg,
           text: currentMsg,
-          message: currentMsg,
-          content: currentMsg
+          message: currentMsg
         })
       });
       
@@ -181,30 +182,27 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            // PERBAIKAN UTAMA: Deteksi berlapis untuk membedakan ketikan user sendiri vs balasan admin
-            // isMe = true artinya pesan dari USER SENDIRI (Kanan - Gelap)
-            // isMe = false artinya pesan dari ADMIN/SYSTEM (Kiri - Putih)
+            
+            // KALIBRASI DETEKSI SISI USER:
+            // Pesan dianggap milik USER SENDIRI (Kanan - Gelap) jika:
+            // 1. Berasal dari status optimistic ketikan lokal (dikirimOlehUserSitus === true)
+            // 2. Memiliki field relasi objek pembeli 'user' di dalamnya
+            // 3. Properti isFromUser secara tegas bernilai true
             const isMe = 
+              msg.dikirimOlehUserSitus === true ||
+              !!msg.user || 
               msg.isFromUser === true || 
               msg.role === 'user' || 
               msg.sender === 'user';
 
-            const text = msg.text || msg.message || msg.content || '';
+            // Ambil data teks dari seluruh kemungkinan field (content / text / message)
+            const text = msg.content || msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             
             if (!text.trim()) return null;
 
             return (
-              <div 
-                key={msg.id || msg._id || idx} 
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: isMe ? 'flex-end' : 'flex-start', 
-                  alignSelf: isMe ? 'flex-end' : 'flex-start', 
-                  maxWidth: '75%' 
-                }}
-              >
+              <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
                 <div style={{
                   background: isMe ? '#0a1628' : '#ffffff',
                   color: isMe ? '#ffffff' : '#1e293b',
