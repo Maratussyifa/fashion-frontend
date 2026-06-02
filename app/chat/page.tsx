@@ -78,7 +78,7 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // OPTIMISTIC UPDATE: Langsung pasang flag penentu kanan (isMe = true)
+    // OPTIMISTIC UPDATE: Langsung kunci di kanan (isBawaanLokalUser = true)
     setMessages(prev => [...prev, {
       id: `user-local-${Date.now()}`,
       isBawaanLokalUser: true,
@@ -129,7 +129,7 @@ export default function UserChatPage() {
         </Link>
       </div>
 
-      {/* BOX PESAN USER (Sudah Diperbaiki Total) */}
+      {/* KONTANER UTAMA BOX PESAN USER */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>Menghubungkan...</div>
@@ -146,18 +146,32 @@ export default function UserChatPage() {
             const text = msg.content || msg.text || msg.message || '';
             if (!text.trim()) return null;
 
-            // Logika Deteksi: Di layar user, chat miliknya sendiri WAJIB di KANAN (isMe = true)
-            const isFromUserRaw = msg.isFromUser === true || String(msg.isFromUser) === 'true';
-            const isMe = msg.isBawaanLokalUser === true || isFromUserRaw;
+            // 🚨 LOGIKA SELEKSI ELIMINASI ADMIN (Sangat Agresif) 🚨
+            // Kita cari tahu apakah ada tanda-tanda pesan ini milik Admin
+            const isFromUserFalse = msg.isFromUser === false || String(msg.isFromUser) === 'false';
+            
+            const adakahBauAdmin = 
+              isFromUserFalse || 
+              msg.sender === 'admin' || 
+              msg.role === 'admin' || 
+              msg.sender === 'cs' ||
+              (msg.user && (msg.user.role === 'admin' || msg.user.role === 'superadmin'));
+
+            // Jika ada bau admin, pasang di KIRI (isMe = false). 
+            // Jika TIDAK ada bau admin, atau ini tiruan lokal, paksa ke KANAN (isMe = true).
+            const isMe = msg.isBawaanLokalUser === true || !adakahBauAdmin;
+
+            // Log monitoring untuk inspect element browser
+            console.log(`User Room -> Text: "${text}" | Bau Admin: ${adakahBauAdmin} | Posisi Kanan: ${isMe}`);
 
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (
-              /* KUNCI PERBAIKAN: Dibungkus Baris 100% Full Width supaya tidak naik-turun */
+              /* Pembungkus 100% full width agar bubble tidak bisa naik-turun selap-selip */
               <div key={msg.id || msg._id || idx} style={{ width: '100%', display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
                   <div style={{
-                    background: isMe ? '#0a1628' : '#ffffff', // User = Gelap (Kanan), CS/Admin = Putih (Kiri)
+                    background: isMe ? '#0a1628' : '#ffffff', // User sendiri = Gelap (Kanan), CS/Admin = Putih (Kiri)
                     color: isMe ? '#ffffff' : '#1e293b',
                     padding: '10px 16px',
                     borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
@@ -166,7 +180,7 @@ export default function UserChatPage() {
                     border: isMe ? 'none' : '1px solid #e2e8f0',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                     whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word' // Biar teks panjang otomatis patah ke bawah, gak melar kesamping
+                    wordBreak: 'break-word'
                   }}>
                     {text}
                   </div>
