@@ -14,7 +14,6 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // === DATA FILE BUKTI QRIS ===
   const [qrisFile, setQrisFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -30,7 +29,6 @@ export default function CheckoutPage() {
     try {
       const [addrs, cart] = await Promise.all([addressesApi.getAll(), cartApi.get()]);
       
-      // Menghilangkan duplikasi alamat
       const uniqueMap = new Map();
       addrs.forEach((item: any) => {
         const textKey = `${item.street || ''}-${item.city || ''}`.replace(/\s+/g, '').toLowerCase();
@@ -47,7 +45,6 @@ export default function CheckoutPage() {
         setSelectedAddress(finalUniqueAddresses[0].id);
       }
       
-      // Mengambil item yang dicheckout dari halaman keranjang
       const ids: number[] = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
       const allItems = cart.items || cart || [];
       setCartItems(ids.length > 0 ? allItems.filter((i: any) => ids.includes(i.id)) : allItems);
@@ -93,7 +90,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // === FUNGSI UTAMA YANG SUDAH DISESUAIKAN DENGAN DOKUMENTASI BE ===
   async function placeOrder() {
     if (!selectedAddress) { 
       alert('Pilih alamat pengiriman terlebih dahulu'); 
@@ -111,20 +107,15 @@ export default function CheckoutPage() {
     setPlacing(true);
     try {
       const formData = new FormData();
-      
-      // 1. Masukkan Bukti Pembayaran ke key 'image' sesuai instruksi BE
       formData.append('image', qrisFile);
       
-      // 2. Bungkus data sesuai struktur keinginan BE ke dalam objek tunggal
       const orderDataPayload = {
         addressId: Number(selectedAddress),
         cartItemIds: cartItems.map(item => Number(item.id))
       };
       
-      // 3. Masukkan ke key 'data' dalam bentuk string JSON murni
       formData.append('data', JSON.stringify(orderDataPayload));
 
-      // Kirim data multipart/form-data ke Back-End
       const order = await ordersApi.create(formData);
       
       localStorage.removeItem('checkoutItems');
@@ -148,8 +139,6 @@ export default function CheckoutPage() {
   const serviceFee = 2000; 
   const total = subtotal + shipping + serviceFee;
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #cbd5e1', borderRadius: 8, padding: '10px 14px', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12, background: '#fff' };
-
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
       <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTop: '3px solid #0f172a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -169,7 +158,6 @@ export default function CheckoutPage() {
 
         <div className="main-checkout-grid">
           
-          {/* KOLOM KIRI */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
             {/* Box Alamat Pengiriman */}
@@ -201,22 +189,20 @@ export default function CheckoutPage() {
               </div>
 
               <button onClick={() => !isSuccess && setShowNewAddr(!showNewAddr)} disabled={isSuccess}
-                style={{ fontSize: '13px', color: '#2563eb', background: 'none', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '12px', cursor: isSuccess ? 'not-allowed' : 'pointer', fontWeight: 600, width: '100%', marginTop: '16px', transition: 'all 0.2s' }}
-                onMouseEnter={e => !isSuccess && (e.currentTarget.style.background = '#f8fafc')}
-                onMouseLeave={e => !isSuccess && (e.currentTarget.style.background = 'none')}>
+                style={{ fontSize: '13px', color: '#2563eb', background: 'none', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '12px', cursor: isSuccess ? 'not-allowed' : 'pointer', fontWeight: 600, width: '100%', marginTop: '16px', transition: 'all 0.2s' }}>
                 {showNewAddr ? '✕ Batalkan Pengisian' : '+ Tambah Alamat Baru'}
               </button>
 
               {showNewAddr && (
                 <div style={{ marginTop: '16px', padding: '16px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   <div className="form-responsive-row">
-                    <input placeholder="Label Alamat (Rumah / Kos)" value={newAddr.label} onChange={e => setNewAddr({ ...newAddr, label: e.target.value })} style={inputStyle} />
-                    <input placeholder="Kota" value={newAddr.city} onChange={e => setNewAddr({ ...newAddr, city: e.target.value })} style={inputStyle} />
+                    <input className="checkout-custom-input" placeholder="Label Alamat (Rumah / Kos)" value={newAddr.label} onChange={e => setNewAddr({ ...newAddr, label: e.target.value })} />
+                    <input className="checkout-custom-input" placeholder="Kota" value={newAddr.city} onChange={e => setNewAddr({ ...newAddr, city: e.target.value })} />
                   </div>
-                  <input placeholder="Nama Jalan & Nomor Kamar" value={newAddr.street} onChange={e => setNewAddr({ ...newAddr, street: e.target.value })} style={inputStyle} />
+                  <input className="checkout-custom-input" placeholder="Nama Jalan & Nomor Kamar" value={newAddr.street} onChange={e => setNewAddr({ ...newAddr, street: e.target.value })} />
                   <div className="form-responsive-row">
-                    <input placeholder="Provinsi" value={newAddr.province} onChange={e => setNewAddr({ ...newAddr, province: e.target.value })} style={inputStyle} />
-                    <input placeholder="Kode Pos" value={newAddr.postalCode} onChange={e => setNewAddr({ ...newAddr, postalCode: e.target.value })} style={inputStyle} />
+                    <input className="checkout-custom-input" placeholder="Provinsi" value={newAddr.province} onChange={e => setNewAddr({ ...newAddr, province: e.target.value })} />
+                    <input className="checkout-custom-input" placeholder="Kode Pos" value={newAddr.postalCode} onChange={e => setNewAddr({ ...newAddr, postalCode: e.target.value })} />
                   </div>
                   <button onClick={addAddress} style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: '8px', padding: '12px 24px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', width: '100%', marginTop: '4px' }}>Simpan Alamat Baru</button>
                 </div>
@@ -326,7 +312,6 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* KOLOM KANAN */}
           <div className="summary-sticky-card">
             <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ringkasan Pesanan</h3>
             
@@ -368,6 +353,17 @@ export default function CheckoutPage() {
       </div>
 
       <style jsx global>{`
+        .checkout-custom-input {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 10px 14px;
+          font-size: 14px;
+          outline: none;
+          box-sizing: border-box;
+          margin-bottom: 12px;
+          background: #fff;
+        }
         .main-checkout-grid {
           display: grid;
           grid-template-columns: 1fr 380px;
