@@ -1,6 +1,6 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { Suspense } from 'react'; // 1. Tambahkan import Suspense dari React
+import { Suspense } from 'react'; 
 import Navbar from '@/components/Navbar'; 
 import Footer from '@/components/Footer'; 
 
@@ -20,18 +20,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>SHINE | Premium Fashion House</title>
         <meta name="description" content="Wear Your Story, Defined by You" />
         <link rel="icon" href="/shine-logo.svg" type="image/svg+xml" />
+
+        {/* 🚨 KUNCI AUTO-SCALE: Memaksa HP nge-zoom out tampilan desktop agar tetap rapi */}
+        <meta name="viewport" content="width=1024" />
       </head>
-      <body style={{ margin: 0, padding: 0, backgroundColor: '#f8fafc' }}>
+      <body style={{ 
+        margin: 0, 
+        padding: 0, 
+        backgroundColor: '#f8fafc',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh'
+      }}>
         
-        {/* 2. Bungkus Navbar dengan Suspense agar Vercel lolos dari prerender-error */}
+        {/* Bungkus Navbar dengan Suspense agar Vercel lolos dari prerender-error */}
         {!hideNavbarFooter && (
           <Suspense fallback={<div style={{ padding: '15px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>Loading Navigation...</div>}>
             <Navbar />
           </Suspense>
         )}
 
-        {/* Berikan minHeight agar footer tetap berada di bawah jika konten sedikit */}
-        <main style={{ minHeight: 'calc(100vh - 70px)' }}>
+        {/* Menggunakan flex-grow agar main mengambil sisa ruang dan mendorong footer ke bawah secara aman */}
+        <main style={{ flex: '1 0 auto', width: '100%' }}>
           {children}
         </main>
 
