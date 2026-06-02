@@ -1,143 +1,105 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Send, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
 function getUserToken(): string | null {
   if (typeof window === 'undefined') return null;
-  
-  const keys = ['token', 'accessToken', 'jwt', 'user_token', 'admin_token', 'access_token'];
+  const keys = ['token', 'accessToken', 'jwt', 'user_token', 'access_token'];
   for (const key of keys) {
     const val = localStorage.getItem(key);
     if (val && val !== 'undefined' && val !== 'null') return val;
   }
-
   const userData = localStorage.getItem('user');
   if (userData) {
     try {
       const parsed = JSON.parse(userData);
-      const tokenInside = parsed.token || parsed.accessToken || parsed.access_token || parsed.user?.token;
-      if (tokenInside) return tokenInside;
+      return parsed.token || parsed.accessToken || parsed.access_token || parsed.user?.token;
     } catch (e) {}
   }
   return null;
 }
 
 export default function UserChatPage() {
-  const pathname = usePathname();
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [hasToken, setHasToken] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const tokenEksis = getUserToken();
-      const directId = localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('idUser');
-      const userData = localStorage.getItem('user');
-      let parsedId = null;
-      
-      if (userData) {
-        try {
-          const parsed = JSON.parse(userData);
-          parsedId = parsed.id || parsed.userId || parsed.idUser || parsed._id || parsed.user?.id;
-        } catch (e) {
-          if (userData !== 'undefined' && userData !== 'null') parsedId = userData;
-        }
-      }
-
-      const finalId = directId || parsedId;
-
-      if (finalId && finalId !== 'undefined' && finalId !== 'null') {
-        setCurrentUserId(String(finalId));
-      } else if (tokenEksis) {
-        setCurrentUserId('4'); 
-      } else {
-        setCurrentUserId(null);
-      }
+      const token = getUserToken();
+      setHasToken(!!token);
     }
-  }, [pathname]);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (!currentUserId) {
-      setLoading(false);
-      return;
-    }
-
-    fetchMyMessages(currentUserId);
-    
+    if (!hasToken) return;
+    fetchMyMessages();
     const interval = setInterval(() => {
-      fetchMyMessages(currentUserId);
-    }, 4000);
-
+      fetchMyMessages();
+    }, 3500);
     return () => clearInterval(interval);
-  }, [currentUserId]);
+  }, [hasToken]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  async function fetchMyMessages(userId: string) {
+  // GET /chat/my
+  async function fetchMyMessages() {
     try {
       const token = getUserToken();
-      
-      const res = await fetch(`${BASE}/chat/user/${userId}`, {
+      const res = await fetch(`${BASE}/chat/my`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
-      
-      if (!res.ok) throw new Error(`Gagal memuat pesan.`);
-      
+      if (!res.ok) throw new Error('Gagal mengambil chat user');
       const result = await res.json();
       const dataArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
       setMessages(dataArray);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   }
 
+  // POST /chat/send
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!inputText.trim() || !currentUserId) return;
+    if (!inputText.trim()) return;
 
     const currentMsg = inputText;
     setInputText('');
 
-    const localMsg = {
-      id: Date.now(),
-      dikirimOlehUserSitus: true,
+    // Optimistic Update instan di kanan user (isFromUser = true)
+    setMessages(prev => [...prev, {
+      id: `user-local-${Date.now()}`,
+      isFromUser: true,
       content: currentMsg,
       text: currentMsg,
       message: currentMsg,
       createdAt: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, localMsg]);
+    }]);
 
     try {
       const token = getUserToken();
-      await fetch(`${BASE}/chat/reply/${currentUserId}`, {
+      const res = await fetch(`${BASE}/chat/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ 
-          content: currentMsg,
-          text: currentMsg,
-          message: currentMsg
-        })
+        body: JSON.stringify({ content: currentMsg, text: currentMsg, message: currentMsg })
       });
-      
-      fetchMyMessages(currentUserId);
+      if (!res.ok) throw new Error('Gagal mengirim chat');
+      fetchMyMessages();
     } catch (err) {
       console.error(err);
     }
@@ -154,41 +116,36 @@ export default function UserChatPage() {
           </Link>
           <div>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#0a1628' }}>Customer Service SHINE</h3>
-            <span style={{ fontSize: '11px', color: '#22c55e', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
+            <span style={{ fontSize: '11px', color: '#22c55e', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }}></span> Online
             </span>
           </div>
         </div>
         <Link href="/katalog" style={{ textDecoration: 'none', color: '#475569', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
-          <ShoppingBag size={14} /> <span className="hide-mobile">Kembali Belanja</span>
+          <ShoppingBag size={14} /> <span>Kembali Belanja</span>
         </Link>
       </div>
 
-      {/* RIWAYAT CHAT */}
+      {/* BOX PESAN */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f4f6f9' }}>
-        {!currentUserId ? (
-          <div style={{ textAlign: 'center', color: '#ef4444', margin: 'auto', maxWidth: '320px', fontSize: '13px', fontWeight: 500, background: '#fee2e2', padding: '16px', borderRadius: '12px', border: '1px solid #fca5a5' }}>
-            🔒 Akun belum terdeteksi penuh. Silakan login kembali untuk memuat obrolan.
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>Menghubungkan...</div>
+        ) : !hasToken ? (
+          <div style={{ textAlign: 'center', color: '#ef4444', margin: 'auto', maxWidth: '320px', background: '#fee2e2', padding: '16px', borderRadius: '12px' }}>
+            🔒 Silakan login terlebih dahulu untuk memulai obrolan dengan Customer Service.
           </div>
-        ) : loading ? (
-          <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', marginTop: '20px' }}>Menghubungkan ke server chat...</div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', margin: 'auto', maxWidth: '280px', fontSize: '13px' }}>
-            👋 Halo! Ada yang bisa kami bantu mengenai pesanan atau produk SHINE? Tulis pertanyaanmu di sini.
+          <div style={{ textAlign: 'center', color: '#94a3b8', margin: 'auto', maxWidth: '280px' }}>
+            👋 Halo! Ada yang bisa kami bantu mengenai produk SHINE? Tulis pertanyaanmu di sini.
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            // Deteksi kebalikan: Dianggap user jika ada tanda relasi objek user atau bendera pengirim lokal aktif
-            const isMe = 
-              msg.dikirimOlehUserSitus === true ||
-              !!msg.user || 
-              msg.isFromUser === true || 
-              msg.role === 'user' || 
-              msg.sender === 'user';
+            
+            // Di sisi user, chat berada di KANAN (isMe = true) jika isFromUser bernilai true
+            const isMe = msg.isFromUser === true || msg.sender === 'user' || msg.role === 'user';
 
             const text = msg.content || msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
-            
             if (!text.trim()) return null;
 
             return (
@@ -199,14 +156,13 @@ export default function UserChatPage() {
                   padding: '10px 14px',
                   borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
                   fontSize: '13.5px',
-                  lineHeight: '1.5',
                   border: isMe ? 'none' : '1px solid #e2e8f0',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                   whiteSpace: 'pre-wrap'
                 }}>
                   {text}
                 </div>
-                <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', padding: '0 2px' }}>{time}</span>
+                <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>{time}</span>
               </div>
             );
           })
@@ -220,20 +176,14 @@ export default function UserChatPage() {
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          disabled={!currentUserId}
-          placeholder={currentUserId ? "Ketik pesan Anda di sini..." : "Silakan login terlebih dahulu..."}
-          style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', background: currentUserId ? '#f8fafc' : '#e2e8f0', fontSize: '13.5px', outline: 'none' }}
+          disabled={!hasToken}
+          placeholder={hasToken ? "Ketik pesan Anda di sini..." : "Silakan login terlebih dahulu..."}
+          style={{ flex: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid #cbd5e1', outline: 'none' }}
         />
-        <button type="submit" disabled={!currentUserId} style={{ width: '40px', height: '40px', borderRadius: '50%', background: currentUserId ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentUserId ? 'pointer' : 'not-allowed' }}>
+        <button type="submit" disabled={!hasToken} style={{ width: '40px', height: '40px', borderRadius: '50%', background: hasToken ? '#0a1628' : '#94a3b8', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Send size={15} />
         </button>
       </form>
-
-      <style>{`
-        @media (max-width: 480px) {
-          .hide-mobile { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 }
