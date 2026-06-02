@@ -41,9 +41,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      {/* Left Panel — foto + overlay (Sama persis dengan Register) */}
-      <div style={{ width: '45%', position: 'relative', overflow: 'hidden' }}>
+    <div className="auth-page-container" style={{ minHeight: '100vh', display: 'flex', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      
+      {/* Left Panel — foto + overlay (Sembunyikan di mobile lewat class CSS) */}
+      <div className="auth-left-panel" style={{ width: '45%', position: 'relative', overflow: 'hidden' }}>
         {/* Foto background */}
         <img
           src="/catalog-denim.jpg"
@@ -98,7 +99,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 48 }}>
+      <div className="auth-right-panel" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 48 }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           <div style={{ marginBottom: 40 }}>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0a1628', marginBottom: 8, fontFamily: 'Georgia, serif' }}>Selamat Datang</h1>
@@ -148,6 +149,19 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* CSS Khusus untuk Merapikan Tampilan Mobile */}
+      <style>{`
+        @media (max-width: 768px) {
+          .auth-left-panel {
+            display: none !important;
+          }
+          .auth-right-panel {
+            padding: 24px !important;
+            background: #ffffff !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

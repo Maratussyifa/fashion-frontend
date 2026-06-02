@@ -93,9 +93,9 @@ export default function ProductDetailPage() {
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', paddingTop: '110px' }}>
+    <div className="product-detail-wrapper" style={{ minHeight: '100vh', background: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', paddingTop: '110px' }}>
       
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem 1.5rem 4rem' }}>
+      <main className="product-detail-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem 1.5rem 4rem' }}>
         
         <div style={{ marginTop: '-10px', marginBottom: '15px' }}>
           <Link href="/home" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#64748b', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500 }}>
@@ -103,9 +103,11 @@ export default function ProductDetailPage() {
           </Link>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>
+        {/* Berikan className untuk kontrol responsive via tag <style> */}
+        <div className="product-grid-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>
           
-          <div style={{ height: 460, background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+          {/* Kontainer Gambar */}
+          <div className="product-image-container" style={{ height: 460, background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
             {currentImage ? (
               <img src={currentImage} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 20 }} />
             ) : (
@@ -113,7 +115,8 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          <div>
+          {/* Kontainer Informasi Produk */}
+          <div className="product-info-container">
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               {product.isNew && <span style={{ background: '#0a1628', color: '#fff', fontSize: 11, padding: '3px 10px', borderRadius: 6, fontWeight: 600, letterSpacing: '0.05em' }}>NEW</span>}
               {product.isTrending && <span style={{ background: '#f59e0b', color: '#fff', fontSize: 11, padding: '3px 10px', borderRadius: 6, fontWeight: 600 }}>🔥 TRENDING</span>}
@@ -200,7 +203,8 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            {/* Bagian Kuantitas & Tombol Beli */}
+            <div className="product-action-row" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #e2e8f0', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
                 <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 36, height: 40, border: 'none', background: '#f8fafc', cursor: 'pointer', fontSize: 16, fontWeight: 600 }}>-</button>
                 <span style={{ width: 40, textAlign: 'center', fontSize: 14, fontWeight: 700 }}>{qty}</span>
@@ -230,6 +234,33 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* CSS Lokal Pendukung Khusus Tampilan Mobile */}
+      <style>{`
+        @media (max-width: 768px) {
+          .product-detail-wrapper {
+            padding-top: 70px !important; /* Menyesuaikan navbar mobile yang biasanya lebih pendek */
+          }
+          .product-detail-main {
+            padding: 1rem 1rem 3rem !important;
+          }
+          .product-grid-layout {
+            grid-templateColumns: 1fr !important; /* Ubah jadi 1 kolom ke bawah */
+            gap: 1.5rem !important; /* Perkecil jarak antar elemen */
+          }
+          .product-image-container {
+            height: 320px !important; /* Kurangi tinggi kotak foto agar proporsional di layar HP */
+            borderRadius: 14px !important;
+          }
+          .product-image-container img {
+            borderRadius: 14px !important;
+          }
+          /* Membuat tombol kuantitas dan keranjang tetap sejajar rapi */
+          .product-action-row {
+            gap: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

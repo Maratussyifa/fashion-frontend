@@ -1,20 +1,19 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react'; // Menambahkan Suspense di sini
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react';
 
-// Data Produk Lokal
+// Data Produk Lokal - Fokus pada Inspirasi Style / Outfit Recommendations
 const EXISTING_PRODUCTS = [
-  { id: 1, name: 'Shine Signature Dress', price: 499000, category: 'Dress', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500' },
-  { id: 2, name: 'Casual Oversized Blazer', price: 350000, category: 'Outerwear', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500' },
-  { id: 3, name: 'Floral Summer Skirt', price: 225000, category: 'Skirt', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500' },
-  { id: 4, name: 'Premium Silk Blouse', price: 289000, category: 'Top', image: 'https://images.unsplash.com/photo-1548624149-f1b9f21307fa?w=500' },
-  { id: 5, name: 'Linen Wide Trousers', price: 310000, category: 'Pants', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500' },
-  { id: 6, name: 'Classic Denim Jacket', price: 420000, category: 'Outerwear', image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500' },
+  { id: 1, name: 'Shine Signature Dress Outfit', category: 'Dress', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500' },
+  { id: 2, name: 'Casual Oversized Blazer Style', category: 'Outerwear', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500' },
+  { id: 3, name: 'Floral Summer Skirt Mix', category: 'Skirt', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500' },
+  { id: 4, name: 'Premium Silk Blouse Look', category: 'Top', image: 'https://images.unsplash.com/photo-1548624149-f1b9f21307fa?w=500' },
+  { id: 5, name: 'Linen Wide Trousers Aesthetic', category: 'Pants', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500' },
+  { id: 6, name: 'Classic Denim Jacket Layering', category: 'Outerwear', image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500' },
 ];
 
-// Komponen Konten Utama (Dipisahkan agar bisa dibungkus Suspense)
 function KatalogContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
@@ -34,7 +33,7 @@ function KatalogContent() {
     return matchesSearch && matchesCategory;
   });
 
-  if (!mounted) return <div style={{ paddingTop: '100px', textAlign: 'center' }}>Memuat Katalog...</div>;
+  if (!mounted) return <div style={{ paddingTop: '100px', textAlign: 'center' }}>Memuat Inspirasi Gaya...</div>;
 
   return (
     <div style={{ 
@@ -52,18 +51,18 @@ function KatalogContent() {
             Home
           </Link>
           <ChevronRight size={14} />
-          <span style={{ color: '#0f172a', fontWeight: 500 }}>Katalog</span>
+          <span style={{ color: '#0f172a', fontWeight: 500 }}>Lookbook Katalog</span>
         </div>
 
         {/* Header Informasi */}
         <div style={{ marginBottom: '32px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>Katalog Produk</h1>
+          <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>Rekomendasi Outfit SHINE</h1>
           {searchIntent ? (
             <p style={{ color: '#64748b', margin: 0, fontSize: '15px' }}>
-              Menampilkan hasil pencarian untuk: <strong style={{ color: '#0a1628' }}>"{searchIntent}"</strong> ({filteredProducts.length} produk)
+              Menampilkan inspirasi untuk: <strong style={{ color: '#0a1628' }}>"{searchIntent}"</strong>
             </p>
           ) : (
-            <p style={{ color: '#64748b', margin: 0, fontSize: '15px' }}>Temukan koleksi pakaian eksklusif untuk melengkapi gaya harian Anda.</p>
+            <p style={{ color: '#64748b', margin: 0, fontSize: '15px' }}>Temukan kurasi padu padan eksklusif untuk inspirasi gaya harian Anda. Untuk pembelian produk, silakan menuju Halaman Utama.</p>
           )}
         </div>
 
@@ -74,7 +73,7 @@ function KatalogContent() {
           <div className="category-sidebar">
             <div className="category-sticky-box">
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', display: 'block' }} className="hidden-mobile">
-                Pilih Kategori
+                Pilih Kategori Style
               </span>
               
               <div className="category-list">
@@ -89,28 +88,30 @@ function KatalogContent() {
                 ))}
               </div>
 
-              {/* Tombol Kembali ke Home */}
+              {/* Tombol Utama Belanja di Home */}
               <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }} className="hidden-mobile">
                 <Link href="/home" style={{ textDecoration: 'none' }}>
                   <button style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
+                    justifyContent: 'center',
                     gap: '8px', 
-                    background: 'none', 
-                    border: '1.5px solid #cbd5e1', 
+                    background: '#0a1628', 
+                    border: 'none', 
                     borderRadius: '8px', 
-                    color: '#475569', 
+                    color: '#fff', 
                     fontSize: '14px', 
                     fontWeight: 600, 
-                    padding: '10px 16px', 
+                    padding: '12px 16px', 
                     width: '100%', 
                     cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(10, 22, 40, 0.15)',
                     transition: 'all 0.2s'
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#0a1628'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#0a1628'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                   >
-                    <ArrowLeft size={16} /> Kembali ke Home
+                    <Sparkles size={16} /> Beli Produk di Home
                   </button>
                 </Link>
               </div>
@@ -121,19 +122,14 @@ function KatalogContent() {
           <div style={{ flex: 1 }}>
             {filteredProducts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 20px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <p style={{ fontSize: '16px', color: '#64748b', margin: '0 0 20px 0' }}>Produk tidak ditemukan.</p>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                <p style={{ fontSize: '16px', color: '#64748b', margin: '0 0 20px 0' }}>Inspirasi outfit belum tersedia.</p>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <button 
-                    onClick={() => { setSelectedCategory('Semua'); window.location.href = '/katalog'; }} 
+                    onClick={() => { setSelectedCategory('Semua'); }} 
                     style={{ background: '#0a1628', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
                   >
-                    Reset Filter
+                    Lihat Semua Style
                   </button>
-                  <Link href="/home" style={{ textDecoration: 'none' }}>
-                    <button style={{ background: '#fff', color: '#475569', border: '1.5px solid #cbd5e1', padding: '10px 24px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
-                      Ke Halaman Utama
-                    </button>
-                  </Link>
                 </div>
               </div>
             ) : (
@@ -142,7 +138,7 @@ function KatalogContent() {
                   <div key={product.id} className="product-card">
                     
                     {/* Pembungkus Gambar Produk */}
-                    <div style={{ width: '100%', height: '320px', background: '#f1f5f9', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '340px', background: '#f1f5f9', position: 'relative', overflow: 'hidden' }}>
                       <img 
                         src={product.image || 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500'} 
                         alt={product.name} 
@@ -151,19 +147,27 @@ function KatalogContent() {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500';
                         }}
                       />
+                      {/* Badge Eksklusif Lookbook pengganti harga */}
+                      <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, color: '#0a1628', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        Inspirasi Gaya
+                      </div>
                     </div>
 
                     {/* Informasi Detail */}
-                    <div style={{ padding: '18px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{product.category}</span>
-                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a', margin: '6px 0 14px 0', height: '44px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.4' }}>
+                    <div style={{ padding: '18px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{product.category} Collection</span>
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a', margin: '6px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {product.name}
                       </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#0a1628' }}>
-                          Rp {product.price.toLocaleString('id-ID')}
-                        </span>
-                      </div>
+                      
+                      {/* Tombol Pemancing ke Home */}
+                      <Link href="/home" style={{ textDecoration: 'none', display: 'block', marginTop: '14px' }}>
+                        <div style={{ background: '#f1f5f9', color: '#0a1628', fontSize: '12px', fontWeight: 600, padding: '8px 0', borderRadius: '6px', transition: 'all 0.2s' }}
+                             onMouseEnter={e => { e.currentTarget.style.background = '#0a1628'; e.currentTarget.style.color = '#fff'; }}
+                             onMouseLeave={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0a1628'; }}>
+                          Dapatkan Produk ini di Home &rarr;
+                        </div>
+                      </Link>
                     </div>
 
                   </div>
@@ -217,7 +221,7 @@ function KatalogContent() {
         }
         .product-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
           gap: 28px;
         }
         .product-card {
@@ -271,10 +275,9 @@ function KatalogContent() {
   );
 }
 
-// Export default yang dibungkus dengan Suspense Boundary
 export default function KatalogPage() {
   return (
-    <Suspense fallback={<div style={{ paddingTop: '100px', textAlign: 'center', color: '#64748b' }}>Memuat Aplikasi Katalog...</div>}>
+    <Suspense fallback={<div style={{ paddingTop: '100px', textAlign: 'center', color: '#64748b' }}>Memuat Lookbook Katalog...</div>}>
       <KatalogContent />
     </Suspense>
   );
