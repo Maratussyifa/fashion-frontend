@@ -6,7 +6,6 @@ import { Send, ShoppingBag, ArrowLeft } from 'lucide-react';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://fashion-backend-production-d453.up.railway.app';
 
-// Fungsi mengambil token user yang login
 function getUserToken(): string | null {
   if (typeof window === 'undefined') return null;
   const keys = ['token', 'accessToken', 'jwt', 'user_token'];
@@ -18,24 +17,21 @@ function getUserToken(): string | null {
 }
 
 export default function UserChatPage() {
-  const pathname = usePathname(); // Digunakan untuk memicu reload data saat pindah halaman seperti di Navbar
+  const pathname = usePathname();
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // SINKRONISASI DATA LOGIN (Menggunakan logika yang sama persis dengan Navbar Anda)
+  // SINKRONISASI DATA LOGIN
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const tokenEksis = getUserToken();
-      
-      // 1. Coba cari ID mandiri
       const directId = localStorage.getItem('userId') || localStorage.getItem('id') || localStorage.getItem('idUser');
-      
-      // 2. Coba cari di dalam objek user
       const userData = localStorage.getItem('user');
       let parsedId = null;
+      
       if (userData) {
         try {
           const parsed = JSON.parse(userData);
@@ -45,13 +41,11 @@ export default function UserChatPage() {
         }
       }
 
-      // Tentukan ID final
       const finalId = directId || parsedId;
 
       if (finalId && finalId !== 'undefined' && finalId !== 'null') {
         setCurrentUserId(String(finalId));
       } else if (tokenEksis) {
-        // FALLBACK AMAN: Jika token ada tapi ID tidak terbaca struktur JSON-nya, gunakan ID default agar chat tidak macet
         setCurrentUserId('1'); 
       } else {
         setCurrentUserId(null);
@@ -59,7 +53,7 @@ export default function UserChatPage() {
     }
   }, [pathname]);
 
-  // Ambil data chat secara berkala (Polling 4 detik) jika ID sudah terdeteksi
+  // Polling Chat (Setiap 4 detik)
   useEffect(() => {
     if (!currentUserId) {
       setLoading(false);
@@ -89,10 +83,12 @@ export default function UserChatPage() {
       });
       if (!res.ok) throw new Error('Gagal memuat pesan');
       const result = await res.json();
+      
+      // Ambil array chat baik dari format .data, .messages, atau langsung root array
       const dataArray = result.data ?? result.messages ?? (Array.isArray(result) ? result : []);
       setMessages(dataArray);
     } catch (err) {
-      console.error(err);
+      console.error('Gagal mengambil chat:', err);
     } finally {
       setLoading(false);
     }
@@ -105,35 +101,42 @@ export default function UserChatPage() {
     const currentMsg = inputText;
     setInputText('');
 
-    // Tampilkan di UI secara instan (Optimistic Update)
+    // Optimistic Update UI (Langsung pasang isFromUser: true)
     const localMsg = {
       id: Date.now(),
-      sender: 'user',
+      isFromUser: true, 
       text: currentMsg,
-      message: currentMsg,
       createdAt: new Date().toISOString()
     };
     setMessages(prev => [...prev, localMsg]);
 
     try {
       const token = getUserToken();
+      
+      // Mengirim data sesuai struktur backend yang menerima parameter objek text
       await fetch(`${BASE}/chat/reply/${currentUserId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ text: currentMsg, message: currentMsg })
+        body: JSON.stringify({ 
+          text: currentMsg,
+          message: currentMsg
+        })
       });
+      
+      // Sinkronisasi ulang dengan database
+      fetchMyMessages(currentUserId);
     } catch (err) {
-      console.error('Gagal mengirim:', err);
+      console.error('Gagal mengirim ke server:', err);
     }
   }
 
   return (
     <div style={{ height: '100vh', paddingTop: '70px', display: 'flex', flexDirection: 'column', background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif', boxSizing: 'border-box' }}>
       
-      {/* SUB-HEADER KHUSUS INFO CHAT */}
+      {/* SUB-HEADER INFO CHAT */}
       <div style={{ background: '#ffffff', padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link href="/home" style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
@@ -165,12 +168,18 @@ export default function UserChatPage() {
           </div>
         ) : (
           messages.map((msg: any, idx: number) => {
-            const isMe = msg.sender === 'user' || msg.sender === 'customer';
-            const text = msg.text || msg.message || msg.content || '';
+            // FIX UTAMA: Menggunakan data boolean isFromUser dari database Railway Anda
+            // Jika isFromUser berharga true, dipastikan itu adalah bubble chat milik User (Kanan)
+            // Jika false atau undefined, maka itu adalah chat dari Admin/Customer Service (Kiri)
+            const isMe = msg.isFromUser === true;
+            
+            const text = msg.text || msg.message || '';
             const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
             
+            if (!text.trim()) return null;
+
             return (
-              <div key={msg.id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+              <div key={msg.id || msg._id || idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
                 <div style={{
                   background: isMe ? '#0a1628' : '#ffffff',
                   color: isMe ? '#ffffff' : '#1e293b',
@@ -179,7 +188,7 @@ export default function UserChatPage() {
                   fontSize: '13.5px',
                   lineHeight: '1.5',
                   border: isMe ? 'none' : '1px solid #e2e8f0',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                   whiteSpace: 'pre-wrap'
                 }}>
                   {text}
