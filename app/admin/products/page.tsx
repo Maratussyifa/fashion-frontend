@@ -20,9 +20,12 @@ export default function AdminProdukPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State untuk Form & mode Edit (Mendukung ID String/Number)
+  // State untuk Form & mode Edit
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [form, setForm] = useState({ name: '', category: '', price: '', stock: '' });
+  
+  // State khusus menampung file gambar yang dipilih admin
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchProductsFromBackend();
@@ -57,18 +60,23 @@ export default function AdminProdukPage() {
     }
   }
 
-  // 2. SUBMIT FORM (TAMBAH / EDIT)
+  // 2. SUBMIT FORM (TAMBAH / EDIT + UPLOAD FOTO)
   async function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
-      const bodyData = {
-        name: form.name,
-        category: form.category, 
-        price: Number(form.price),
-        stock: Number(form.stock)
-      };
+      // Menggunakan FormData untuk mendukung pengiriman file
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('category', form.category);
+      formData.append('price', String(form.price));
+      formData.append('stock', String(form.stock));
+      
+      // Jika admin memilih berkas gambar, masukkan ke formData
+      if (selectedFile) {
+        formData.append('image', selectedFile); 
+      }
 
       let url = `${BASE}/products`;
       let method = 'POST';
@@ -82,9 +90,9 @@ export default function AdminProdukPage() {
         method: method,
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          // Jangan berikan 'Content-Type': 'application/json' karena browser akan otomatis mengatur boundary FormData
         },
-        body: JSON.stringify(bodyData)
+        body: formData
       });
 
       if (!res.ok) {
@@ -128,6 +136,7 @@ export default function AdminProdukPage() {
       price: String(product.harga ?? product.price ?? ''),
       stock: String(product.stok ?? product.stock ?? '')
     });
+    setSelectedFile(null); // Reset input file saat edit dibuka
     setShowModal(true);
   }
 
@@ -135,6 +144,7 @@ export default function AdminProdukPage() {
     setShowModal(false);
     setEditingId(null);
     setForm({ name: '', category: '', price: '', stock: '' });
+    setSelectedFile(null);
   }
 
   // 5. FILTER LOGIKA PENCARIAN & STATUS
@@ -208,8 +218,8 @@ export default function AdminProdukPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Produk', 'Kategori', 'Harga', 'Stok', 'Status', 'Aksi'].map(h => (
-                  <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                {['Produk', 'Kategori', 'Harga', 'Stok', 'Status', 'ASigma'].map(h => (
+                  <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h === 'ASigma' ? 'Aksi' : h}</th>
                 ))}
               </tr>
             </thead>
@@ -229,7 +239,6 @@ export default function AdminProdukPage() {
                   const price = p.harga ?? p.price ?? 0;
                   const stock = p.stok ?? p.stock ?? 0;
                   
-                  // Perbaikan Deteksi URL Gambar dari BE
                   const image = p.imageUrl ?? p.image ?? p.gambar ?? '';
 
                   const rawCategory = p.kategori ?? p.category;
@@ -329,6 +338,24 @@ export default function AdminProdukPage() {
                 />
               </div>
             ))}
+
+            {/* Input Tambahan: Foto Produk (File Upload) */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                Foto Produk {editingId && <span style={{ fontWeight: 400, color: '#64748b' }}>(Kosongkan jika tidak ingin diubah)</span>}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                required={!editingId} // Wajib diisi hanya saat menambah produk baru
+                onChange={e => {
+                  if (e.target.files && e.target.files[0]) {
+                    setSelectedFile(e.target.files[0]);
+                  }
+                }}
+                style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', outline: 'none', boxSizing: 'border-box', background: '#f8fafc', color: '#475569' }}
+              />
+            </div>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button type="button" onClick={handleCloseModal} style={{ flex: 1, background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Batal</button>
