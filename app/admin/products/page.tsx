@@ -69,13 +69,29 @@ export default function AdminProdukPage() {
       // Menggunakan FormData untuk mendukung pengiriman file
       const formData = new FormData();
       formData.append('name', form.name);
-      formData.append('category', form.category);
       formData.append('price', String(form.price));
       formData.append('stock', String(form.stock));
       
-      // DISESUAIKAN: Menggunakan key 'imageUrl' sesuai spesifikasi Back-End kamu
+      // Tambahan data pelengkap agar sesuai dengan skema @ApiBody milik BE
+      formData.append('description', 'Koleksi fashion eksklusif dari toko SHINE.');
+      formData.append('isNew', 'true');
+      formData.append('isTrending', 'false');
+
+      // KONVERSI KATEGORI: Mengubah teks input menjadi ID angka murni yang dipahami database BE
+      let idKategori = '1'; // Default ID 1 (misal Kaos)
+      const inputKategori = form.category.toLowerCase();
+      if (inputKategori.includes('aksesoris') || inputKategori.includes('topi')) {
+        idKategori = '2'; // Misal ID 2 di database BE adalah kategori Aksesoris
+      } else if (inputKategori.includes('hoodie')) {
+        idKategori = '3';
+      } else if (inputKategori.includes('celana')) {
+        idKategori = '4';
+      }
+      formData.append('categoryId', idKategori); 
+
+      // SINKRONISASI: Menggunakan key 'image' sesuai dengan FileInterceptor('image') NestJS BE
       if (selectedFile) {
-        formData.append('imageUrl', selectedFile); 
+        formData.append('image', selectedFile); 
       }
 
       let url = `${BASE}/products`;
@@ -90,7 +106,7 @@ export default function AdminProdukPage() {
         method: method,
         headers: {
           'Authorization': `Bearer ${token}`
-          // Penggunaan FormData mengharuskan kita mengosongkan 'Content-Type' agar browser menata Boundary-nya sendiri
+          // Jangan atur Content-Type secara manual agar browser otomatis menyusun form-data boundary
         },
         body: formData
       });
@@ -322,7 +338,7 @@ export default function AdminProdukPage() {
             
             {[
               { label: 'Nama Produk', key: 'name', type: 'text', placeholder: 'cth. Denim Jacket Premium' },
-              { label: 'Kategori', key: 'category', type: 'text', placeholder: 'cth. Jaket' },
+              { label: 'Kategori', key: 'category', type: 'text', placeholder: 'cth. Aksesoris' },
               { label: 'Harga (Rp)', key: 'price', type: 'number', placeholder: 'cth. 185000' },
               { label: 'Stok Barang', key: 'stock', type: 'number', placeholder: 'cth. 50' },
             ].map(field => (
