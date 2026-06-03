@@ -73,9 +73,9 @@ export default function AdminProdukPage() {
       formData.append('price', String(form.price));
       formData.append('stock', String(form.stock));
       
-      // Jika admin memilih berkas gambar, masukkan ke formData
+      // DISESUAIKAN: Menggunakan key 'imageUrl' sesuai spesifikasi Back-End kamu
       if (selectedFile) {
-        formData.append('image', selectedFile); 
+        formData.append('imageUrl', selectedFile); 
       }
 
       let url = `${BASE}/products`;
@@ -89,8 +89,8 @@ export default function AdminProdukPage() {
       const res = await fetch(url, {
         method: method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          // Jangan berikan 'Content-Type': 'application/json' karena browser akan otomatis mengatur boundary FormData
+          'Authorization': `Bearer ${token}`
+          // Penggunaan FormData mengharuskan kita mengosongkan 'Content-Type' agar browser menata Boundary-nya sendiri
         },
         body: formData
       });
@@ -218,8 +218,8 @@ export default function AdminProdukPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Produk', 'Kategori', 'Harga', 'Stok', 'Status', 'ASigma'].map(h => (
-                  <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h === 'ASigma' ? 'Aksi' : h}</th>
+                {['Produk', 'Kategori', 'Harga', 'Stok', 'Status', 'Aksi'].map(h => (
+                  <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -339,7 +339,7 @@ export default function AdminProdukPage() {
               </div>
             ))}
 
-            {/* Input Tambahan: Foto Produk (File Upload) */}
+            {/* Input File Upload Gambar Produk */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                 Foto Produk {editingId && <span style={{ fontWeight: 400, color: '#64748b' }}>(Kosongkan jika tidak ingin diubah)</span>}
@@ -347,7 +347,7 @@ export default function AdminProdukPage() {
               <input
                 type="file"
                 accept="image/*"
-                required={!editingId} // Wajib diisi hanya saat menambah produk baru
+                required={!editingId} // Wajib melampirkan berkas foto hanya saat menambahkan data baru
                 onChange={e => {
                   if (e.target.files && e.target.files[0]) {
                     setSelectedFile(e.target.files[0]);
